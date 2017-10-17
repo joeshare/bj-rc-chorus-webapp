@@ -1,0 +1,346 @@
+<div class="graph-data-manager1">
+    <nav-bar :nav-list="navlist"></nav-bar>
+   <!-- <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            <div class="chorus-form-field" style="height:28px; display: inline-block; padding-top: 8px;">
+                <div style="display:inline-block; line-height:28px; float: left; margin-right:8px;">项目</div>
+                <ad-select v-model="selectValue"
+                           :options="options"
+                           :small="true"
+                           @change="changeoption"
+                           label="">
+                </ad-select>
+            </div>
+        </div>
+    </div>-->
+    <div class="chorus-grid-wrapper">
+        <div class="res_con"></div>
+    </div>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l" style=" clear: both;">
+            <div class="chorus-form-field" style="height:28px;display: inline-block; clear: both;">
+                <div style="display:inline-block; line-height:28px; margin-right:8px;">图数据名称</div>
+                <ad-input style="width: 220px;line-height:28px;"
+                          v-model="searchKey"
+                          placeholder="图数据名称"
+                          :small="true"
+                          icon="ion-ios-search"></ad-input>
+                <input  class="chorus-button admin-small" type="button" value="搜索"  @click="onsearchClick()">
+            </div>
+        </div>
+        <div class="toolbar-r">
+            <input class="chorus-button admin-small" type="button"  @click="createBtnClick()" value="新建图数据库" >
+        </div>
+    </div>
+    <div class="chorus-grid-wrapper chorus-grid meta-data-management-grid">
+        <table class="admin-table  admin-striped">
+            <thead>
+            <tr>
+                <th>图数据名称</th>
+                <th>图数据编码</th>
+                <th>图数据类型</th>
+                <th>图数据描述</th>
+                <th>创建人</th>
+                <th>创建时间</th>
+                <th>安全等级</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="!data.list||data.list.length==0">
+                <td  :colspan="8" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+            </tr>
+            <tr v-for="entry in data.list" v-else >
+                <td >{{entry.dataName}}</td>
+                <td>{{entry.dataCode}}</td>
+                <td>{{entry.dataType}}</td>
+                <td>{{entry.dataDesc}}</td>
+                <td>{{entry.createUser}}</td>
+                <td>{{entry.createTime}}</td>
+                <td>{{entry.securityLevel}}</td>
+                <td class="project-management-opt" style="text-align: center">
+                    <input class="chorus-button admin-small"  type="button" value="详情" @click="detailsBtnClick(entry)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div  style="text-align: right;">
+        <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"  @toggle-page="togglePage"></paginator>
+    </div>
+    <!-- 详情 modal-->
+    <ad-modal
+            height="590px"
+            width="800px"
+            title="详情"
+            :display="detailsDisplay"
+            :buttons="detailsModalBtns"
+            @admin-modal-off="() => {detailsDisplay = false }"
+            @ad-modal-on="detailsModalOn">
+        <ad-tabs :tabs="tabs" :current-tab-name="activeTabval" @toggle-tab="toggleTab"   style="height:400px">
+                <div name="baseInfo" class="admin-tabs-content" >
+                    <div class="admin-grid-container">
+                        <div class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="名称："
+                                           placeholder=""
+                                           v-model="detailsdata.dataName"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="编码："
+                                           placeholder=""
+                                           v-model="detailsdata.dataCode"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="创建人："
+                                           placeholder=""
+                                           v-model="detailsdata.createUser"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="创建时间："
+                                           placeholder=""
+                                           v-model="detailsdata.createTime"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div v-show="detailstype" class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="关联点1："
+                                           placeholder=""
+                                           v-model="detailsdata.relatedVertex1Id"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div v-show="detailstype" class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="关联点2："
+                                           placeholder=""
+                                           v-model="detailsdata.relatedVertex2Id"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div class="admin-grid-cell-6">
+                            <div  style="padding: 10px;">
+                                <ad-input  class="graph-data-manager-ad-input"
+                                           :disabled="true"
+                                           label="安全等级："
+                                           placeholder=""
+                                           v-model="detailsdata.securityLevel"
+                                ></ad-input>
+                            </div>
+                        </div>
+                        <div class="admin-grid-cell-12">
+                            <div  style="padding: 10px;">
+                                <ad-input class="graph-data-manager-ad-input"
+                                          :disabled="true"
+                                          label="表描述："
+                                          type="textarea"
+                                          placeholder=""
+                                          v-model="detailsdata.dataDesc"
+                                ></ad-input>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div name="fieldInfo" class="admin-tabs-content" >
+                <div class="chorus-grid  chorus-grid" style="width:1000px">
+                    <table class="admin-table  admin-striped chorus-grid">
+                        <thead>
+                            <tr>
+                                <th>属性名称</th>
+                                <th>属性编码</th>
+                                <th>属性类型</th>
+                                <th>属性长度</th>
+                                <th>属性说明</th>
+                                <th>安全等级</th>
+                                <th>查询条件</th>
+                                <th>创建人</th>
+                                <th>创建时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-if="data.length==0">
+                            <td  :colspan="8" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                        </tr>
+                        <tr v-for="entry in detailsdata.propertyList" v-else >
+                            <td :title="entry.propertyName">{{entry.propertyName}}</td>
+                            <td :title="entry.propertyCode">{{entry.propertyCode}}</td>
+                            <td :title="entry.propertyDatatype">{{entry.propertyDatatype}}</td>
+                            <td :title="entry.propertyLength">{{entry.propertyLength}}</td>
+                            <td :title="entry.propertyDesc">{{entry.propertyDesc}}</td>
+                            <td :title="entry.securityLevel">{{entry.securityLevel}}</td>
+                            <td :title="entry.status">{{entry.status}}</td>
+                            <td :title="entry.createUser">{{entry.createUser}}</td>
+                            <td :title="entry.createTime">{{entry.createTime}}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </ad-tabs>
+    </ad-modal>
+    <!-- 新建 modal-->
+    <ad-modal
+            height="570px"
+            width="800px"
+            title="新建图数据库"
+            :display="createDisplay"
+            :buttons="createModalBtns"
+            @admin-modal-off="() => {createDisplay = false }"
+            @ad-modal-on="createModalOn">
+        <div v-show="isfirstsetp" class="admin-grid-container">
+            <div class="admin-grid-cell-12">
+                <div  style="padding: 10px; width:50%;">
+                    <ad-select class="graph-data-manager-ad-input" v-model="createdata.dataType" :options="optionsgraphdatatype"
+                           @change="changeCreateoption"    :small="true" label="图数据类型：">
+                    </ad-select>
+                </div>
+            </div>
+            <div class="admin-grid-cell-6">
+                <div  style="padding: 10px;">
+                    <ad-input class="graph-data-manager-ad-input" :warnings="nameWarnings" label="名称：" placeholder=""
+                              v-model="createdata.dataName"  :small="true"></ad-input>
+                </div>
+            </div>
+            <div class="admin-grid-cell-6">
+                <div  style="padding: 10px;">
+                    <ad-input class="graph-data-manager-ad-input" :warnings="codeWarnings" placeholder=""
+                               label="编码："  v-model="createdata.dataCode"  :small="true"
+                    ></ad-input>
+                </div>
+            </div>
+            <div  v-show="createtype"  class="admin-grid-cell-6">
+                <div  style="padding: 10px;">
+                    <ad-select  class="graph-data-manager-ad-input"
+                            v-model="createdata.relatedVertex1Id"
+                            :options="optionsrelation1"
+                            :small="true"
+                            placeholder=""
+                            label="关联点1：">
+                    </ad-select>
+                </div>
+            </div>
+            <div  v-show="createtype"  class="admin-grid-cell-6">
+                <div  style="padding: 10px;">
+                    <ad-select class="graph-data-manager-ad-input"
+                            v-model="createdata.relatedVertex2Id"
+                            :options="optionsrelation2"
+                            :small="true"
+                            placeholder=""
+                            label="关联点2：">
+                    </ad-select>
+                </div>
+            </div>
+            <div class="admin-grid-cell-6">
+                <div  style="padding: 10px;">
+                    <ad-select class="graph-data-manager-ad-input"
+                            v-model="createdata.securityLevel"
+                            :options="optionssecuritylevel"
+                            :small="true"
+                            placeholder=""
+                            label="安全等级：">
+                    </ad-select>
+                </div>
+            </div>
+            <div class="admin-grid-cell-12">
+                <div  style="padding: 10px;">
+                    <ad-input class="graph-data-manager-ad-input"
+                              label="表描述："
+                              type="textarea"
+                              v-model="createdata.dataDesc"
+                              :small="true"
+                              placeholder=""
+                    ></ad-input>
+                </div>
+            </div>
+        </div>
+        <div v-show="!isfirstsetp" class="admin-grid-container  graph-data-manager">
+            <div class="toolbar-l">
+                <div class="chorus-form-field">
+                    <input class="chorus-button admin-small" type="button" @click="addNewProperty()" value="增加新属性" >
+                </div>
+            </div>
+            <div class="chorus-grid " >
+                <table class="admin-table  admin-striped chorus-grid" style="width:1000px">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 150px;">属性名称</th>
+                            <th style="min-width: 150px;">属性编码</th>
+                            <th>属性类型</th>
+                            <th>属性长度</th>
+                            <th>属性说明</th>
+                            <th>安全等级</th>
+                            <th>查询条件</th>
+                            <th style="min-width: 100px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="createdata.propertyList&&createdata.propertyList.length==0">
+                            <td  :colspan="8" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                        </tr>
+                        <tr v-for="entry in createdata.propertyList" v-else >
+                            <td>
+                                <ad-input v-model="entry.propertyName" placeholder="" :small="true" :warnings="entry.nameWarnings" class="graph-data-manager-ad-input"></ad-input>
+                            </td>
+                            <td>
+                                <ad-input v-model="entry.propertyCode" placeholder=""  :warnings="entry.codeWarnings"  :small="true" class="graph-data-manager-ad-input"></ad-input>
+                            </td>
+                            <td>
+                                <ad-select class="graph-data-manager-ad-input"
+                                           v-model="entry.propertyDatatype"
+                                           :options="optionsproptype"
+                                           :small="true" >
+                                </ad-select>
+                            </td>
+                            <td>
+                                <ad-input v-model="entry.propertyLength" :warnings="entry.lengthWarnings" placeholder=""  :small="true" class="graph-data-manager-ad-input"></ad-input>
+                            </td>
+                            <td>
+                                <ad-input v-model="entry.propertyDesc" :small="true" placeholder="" class="graph-data-manager-ad-input"></ad-input>
+                            </td>
+                            <td>
+                                <ad-select class="graph-data-manager-ad-input"
+                                           v-model="entry.securityLevel"
+                                           :options="optionssecuritylevel"
+                                           :small="true" >
+                                </ad-select>
+                            </td>
+                            <td>
+                                <ad-select class="graph-data-manager-ad-input"
+                                           v-model="entry.status"
+                                           :options="optionsissearch"
+                                           :small="true" >
+                                </ad-select>
+                            </td>
+                            <td  style="text-align: center">
+                                <input class="chorus-button admin-small" type="button" value="删除" @click="createDelete(entry)">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ad-modal>
+</div>

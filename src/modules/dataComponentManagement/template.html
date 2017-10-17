@@ -1,0 +1,164 @@
+<div class="data-component-management">
+    <div  class="chorus-mark-loading" v-show="isShowMarkLoading">
+        <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+    </div>
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            <div class="chorus-form-field " style="position: relative;">
+                <ad-input style="width: 210px;"
+                          v-model="searchKey"
+                          placeholder="组件名"
+                          :small="true"
+                          icon="ion-ios-search"></ad-input>
+                <input style="position: absolute;top: 6px;left: 215px;" class="chorus-button admin-small" type="button"
+                       value="搜索" @click="fetchData(1)">
+            </div>
+        </div>
+        <div class="toolbar-r">
+            <input class="chorus-button admin-small" type="button" value="上传" @click="uploadBtnClick();">
+        </div>
+    </div>
+    <div class="chorus-grid-wrapper chorus-grid meta-data-management-grid">
+        <table class="admin-table  admin-striped">
+            <thead>
+            <tr>
+                <th>组件名称</th>
+                <th>组件别名</th>
+                <th>组件类型</th>
+                <th>组件分类</th>
+                <th>组件级别</th>
+                <th>所属项目</th>
+                <th>组件描述</th>
+                <th>上传人</th>
+                <th>上传时间</th>
+                <th style="min-width: 100px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="data.length==0">
+                <td :colspan="9" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+            </tr>
+            <tr v-for="entry in data" v-else>
+                <td>{{entry.moduleViewName}}</td>
+                <td>{{entry.moduleAliasName}}</td>
+                <td>{{entry.moduleTypeText}}</td>
+                <td>{{entry.moduleType}}</td>
+                <td>{{entry.moduleLevel}}</td>
+                <td>{{entry.projectName}}</td>
+                <td>{{entry.remark}}</td>
+                <td>{{entry.createUserName}}</td>
+                <td>{{entry.updateTime}}</td>
+                <td  style="text-align: center">
+                    <input class="chorus-button admin-small"  type="button" value="重新上传" @click="uploadBtnClick(entry)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="text-align: right;">
+        <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"
+                   @toggle-page="togglePage"></paginator>
+    </div>
+    <!-- 上传 modal-->
+    <ad-modal
+            height="510px"
+            width="600px"
+            title="数据组件上传"
+            :display="uploadDisplay"
+            :buttons="uploadModalBtns"
+            @admin-modal-off="() => {uploadDisplay = false;}"
+            >
+        <form id="data-component-fileupload-form">
+        <div class=" admin-grid-container">
+
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-input class="data-component-ad-input"
+                              label="组件名称："
+                              v-model="moduleViewName"
+                              placeholder=""
+                              :disabled="isEdit"
+                              @input="clearvalidate()"
+                              :warnings="moduleViewNameWarnings"
+                            ></ad-input>
+                </div>
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-input class="data-component-ad-input"
+                              label="组件别名："
+                              v-model="moduleAliasName"
+                              placeholder=""
+                              :disabled="isEdit"
+                              @input="clearvalidate()"
+                              :warnings="moduleAliasNameWarnings"
+                            ></ad-input>
+                </div>
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-select class="data-component-ad-input"
+                               v-model="moduleLevel"
+                               @select="clearvalidate()"
+                               :options="levelOption"
+                               :disabled="isEdit"
+                               label="组件级别："
+                               :small="true">
+                    </ad-select>
+                </div>
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-select class="data-component-ad-input"
+                               v-model="moduleCategory"
+                               :options="typeOption"
+                               label="组件类型："
+                               :disabled="isEdit"
+                               @click="validateForm()"
+                               :warnings="moduleCategoryWarnings"
+                               :small="true">
+                    </ad-select>
+                </div>
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-sug-input class="data-component-ad-input"
+                                  label="所属项目："
+                                  v-model="projectName"
+                                  :associations="projectSelectOptions"
+                                  :small="true"
+                                  placeholder=""
+                                  @click="clickInput"
+                                  @toggle-select="sugSelectClick"
+                                  @input="inputSugChangeInput"
+                                  :warnings="projectNameWarnings"
+                                  :disabled="isEdit?isEdit:projectSelectDisabled"
+                            ></ad-sug-input>
+                </div>
+                <div class="admin-grid-cell-6" style="padding: 10px;">
+                    <ad-select class="data-component-ad-input"
+                               v-model="moduleType"
+                               :options="classOption"
+                               label="组件分类："
+                               :warnings="moduleTypeWarnings"
+                               :disabled="isEdit?isEdit:moduleTypeDisabled"
+                               v-show="!moduleTypeDisabled"
+                               :small="true">
+                    </ad-select>
+                    <ad-input :disabled="true"   label="组件分类：" v-show="moduleTypeDisabled"  :small="true"  class="data-component-ad-input" value="Job"></ad-input>
+                </div>
+
+                <div class="admin-grid-cell-12" style="padding: 10px;">
+                    <ad-input class="data-component-ad-input"
+                              label="组件描述："
+                              type="textarea"
+                              placeholder=""
+                              v-model="remark"
+                              :warnings="remarkWarnings"
+                            ></ad-input>
+                </div>
+                <div class="admin-grid-cell-12 admin-input" style="padding: 10px;position: relative;">
+                    <input class="chorus-button admin-small" type="button" value="文件上传">
+                    <input id="data-component-file" @change="changeFile"
+                           style="position: absolute;top:12px;left: 15px;width: 72px;height: 26px;overflow: hidden;opacity: 0;"
+                           type="file"/>
+                    <div style="position: absolute;top:17px;left:97px;font-size: 12px;">{{fileName}}</div>
+                    <div class="admin-input-warning" v-show="fileNameWarnings" style="padding-left: 3px">必填项</div>
+                </div>
+        </div>
+        </form>
+    </ad-modal>
+
+</div>

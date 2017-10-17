@@ -1,0 +1,9 @@
+<div v-if="entry.variable&&entry.variable!=''" style="font-size: 12px;padding:10px 0;width: 100%;margin-bottom: 15px;">
+    <div><span style="padding-right:10px;display: inline-block;margin:3px 0;">提示：{{entry.name}}中可使用的变量</span> <i v-bind:class="['workflow-edit-property-variable-icon',entry.isShowVariable ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" @click="clickShowVariable(entry,$event)"></i></div>
+    <div class="panel" style="display: none;">
+        <div class="" v-for="obj in str2Arr(entry.variable)"  style="border-bottom: 1px solid #efefef;margin-bottom: 10px;padding-bottom: 10px;">
+            <div class="workflow-edit-property-variable-title-text" :title="obj.name" style="line-height: 20px;margin:3px 0; ">变量名称：{{obj.name}}</div>
+            <div class="" :title="obj.desc" style="hline-height: 20px;margin:3px 0;">变量描述：{{obj.desc}}</div>
+        </div >
+    </div>
+</div>

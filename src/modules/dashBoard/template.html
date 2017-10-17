@@ -1,0 +1,141 @@
+<div class="dashboard" >
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div>
+        <div class="admin-grid-container">
+            <div  class="admin-grid-cell-7" style="padding-right: 20px;">
+                <div class="board-title">资源</div>
+                <div class="admin-grid-container resouce-continer">
+                    <div class="admin-grid-cell-4 resouce-li">
+                        <div>总资源</div>
+                        <div>CPU：  <span>{{resoucedata.AllCPU}} 个</span></div>
+                        <div>内存： <span>{{resoucedata.Allmemery}} GB</span></div>
+                        <div>存储： <span>{{resoucedata.Alldisk}}</span></div>
+                    </div>
+
+                    <div class="admin-grid-cell-4 resouce-li">
+                        <div>可用资源</div>
+                        <div>CPU：  <span>{{resoucedata.AcitveCPU}} 个</span></div>
+                        <div>内存： <span>{{resoucedata.Activememery}} GB</span></div>
+                        <div>存储： <span>{{resoucedata.Activedisk}}</span></div>
+                    </div>
+
+                    <div class="admin-grid-cell-4 resouce-li" >
+                        <div>容器</div>
+                        <div>已使用：  <span>{{resoucedata.ContentUsed}} 个</span></div>
+                        <div>未使用： <span>{{resoucedata.ContentActive}} 个</span></div>
+                    </div>
+                </div>
+            </div>
+            <div  class="admin-grid-cell-5">
+                <div class="board-title">成员(<span style="color: green;">共:{{this.membercount}} 位</spaN>)</div>
+                <div class="member">
+                    <div id="member"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="admin-grid-container" style="margin-top: 20px;">
+            <div  class="admin-grid-cell-12">
+                <div class="board-title">数据</div>
+                <div class="admin-grid-container" style="  border-right: 1px solid #dfe1e5;min-height: 200px;">
+                    <div class="admin-grid-cell-2 data-continer" style="padding-top: 30px;padding-left:0px;text-align: center;">
+                        <div style="height: 30px; font-weight: bold;">数据表</div>
+                        <div style="height: 30px;color: green;font-size: 28px;">{{tabledata.tablecount}} 个</div>
+                        <div style="height: 30px; font-weight: bold;margin-top: 10px;">存储</div>
+                        <div style="height: 30px;color: green;font-size: 28px;">{{tabledata.storagecount}}</div>
+                    </div>
+                    <div class="admin-grid-cell-3 data-continer" style="padding-left: 2%;">
+                        <div  class="data-title">记录数TOP5</div>
+
+                        <div v-if="tabledata.record.length==0">
+                            暂无数据
+                        </div>
+                        <div v-else   class="text-top-race">
+                        <div v-for="(data,index) in tabledata.record">
+                            <div :title="data.tableName" :style="index==0?'color:#FF650F':index==1?'color:#ffab0b':''" class="text-overflower">{{index+1}}.{{data.tableName}}</div>
+                            <div  class="text-overflower-value">： {{data.rows}} 条</div>
+                        </div>
+                            </div>
+                    </div>
+                    <div class="admin-grid-cell-3 data-continer"  style="padding-left: 2%;">
+                        <div class="data-title">存储TOP5</div>
+
+                        <div v-if="tabledata.storage.length==0">
+                            暂无数据
+                        </div>
+                        <div  v-else  class="text-top-race">
+                        <div v-for="(data,index) in tabledata.storage"  style="text-align: left;">
+                            <div :title="data.tableName"  :style="index==0?'color:#FF650F':index==1?'color:#ffab0b':''" class="text-overflower">{{index+1}}.{{data.tableName}}</div>
+                            <div  class="text-overflower-value">： {{data.storageSize}}</div>
+                        </div>
+                            </div>
+                    </div>
+                    <div class="admin-grid-cell-2  data-continer" style="padding-left: 2%;">
+                        <div  class="data-title">关注度TOP5</div>
+
+                        <div v-if="tabledata.attention.length==0">
+                            暂无数据
+                        </div>
+                        <div  v-else  class="text-top-race">
+                        <div  v-for="(data,index) in tabledata.attention">
+                            <div :title="data.resourceName"  :style="index==0?'color:#FF650F':index==1?'color:#ffab0b':''" class="text-overflower" style="max-width:90px;">{{index+1}}.{{data.resourceName}}</div>
+                            <div  class="text-overflower-value">： {{data.attCount}} 人</div></div>
+                            </div>
+                    </div>
+                    <div class="admin-grid-cell-2  data-continer" style="padding-left: 2%">
+                        <div  class="data-title">使用度TOP5</div>
+
+                        <div v-if="tabledata.used.length==0">
+                            暂无数据
+                        </div>
+                        <div  v-else   class="text-top-race">
+                            <div v-for="(data,index) in tabledata.used">
+                                <div :title="data.resourceName"  :style="index==0?'color:#FF650F':index==1?'color:#ffab0b':''" class="text-overflower" style="max-width:90px;">{{index+1}}.{{data.resourceName}}</div>
+                                <div  class="text-overflower-value">：{{data.usedCount}}次</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-grid-container" style="margin-top: 20px;">
+            <div  class="admin-grid-cell-12">
+                <div class="board-title">任务</div>
+                <div class="admin-grid-container">
+
+
+                    <div class="admin-grid-cell-12 bottom-continer">
+                        <div id="batchtask" class="bottom-map">暂无数据</div>
+                    </div>
+
+                    <div class="admin-grid-cell-12 bottom-continer">
+                        <div id="streamtask" class="bottom-map">暂无数据</div>
+                    </div>
+
+                    <div class="admin-grid-cell-8 continer-task" style="position: relative;" >
+                        <div style="width: 95%; height: 250px;margin-left: 2%;" id="taskdisbute">暂无数据</div>
+                        <div v-show="shownotask" style="position: absolute; top:50%; left:45%;">暂无数据</div>
+                    </div>
+
+                    <div class="admin-grid-cell-4 data-continer-time">
+                        <div class="data-title">执行时间TOP5</div>
+
+                        <div v-if="!exedata||exedata.length==0">
+                            暂无数据
+                        </div>
+                        <div  v-else  class="text-top-race" style="margin-top: 15px;">
+                        <div v-for="(data,index) in exedata" style="height: 35px;">
+                            <div :title="data.jobName"  :style="index==0?'color:#FF650F':index==1?'color:#ffab0b':''" class="text-overflower" style="max-width:200px; ">{{index+1}}.{{data.jobName}}</div>
+                            <div class="text-overflower-value">： {{data.seconds}}</div></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
+    </div>
+</div>

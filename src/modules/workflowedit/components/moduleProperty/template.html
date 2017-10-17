@@ -1,0 +1,185 @@
+<div class="workflow-edit-module-property-wrapper admin-grid-container" id="workflow-edit-module-property-wrapper" style="padding:10px 0 0 0;">
+    <!-- 左列 -->
+    <div class="admin-grid-cell-12">
+        <div :class='["workflow-edit-module-property-group",!!modulePropertyData&&!modulePropertyData.noShowTaskReferenceName?"":"workflow-hidden"]'>
+            <div class="group-line-short"></div>
+            <div class="group-line-text">基本信息</div>
+            <div class="group-line-long"></div>
+        </div>
+        <!-- 基本 -->
+        <div v-if="!!modulePropertyData&&!modulePropertyData.noShowTaskReferenceName">
+            <admin-input class="workflow-edit-property-panel-field" v-model="modulePropertyData.taskReferenceName" label="组件名称 (必填项)"
+                placeholder="" :warnings="modulePropertyData.taskReferenceNameWarnings" :small="true" :disabled="!isEditable"
+                @input='paramsInputEvent(modulePropertyData.taskReferenceName,"taskReferenceName")'></admin-input>
+        </div>
+        <div v-for="group in groupData">
+            <!-- group name -->
+            <div class="workflow-edit-module-property-group" v-show="!!group.name">
+                <div class="group-line-short"></div>
+                <div class="group-line-text">{{group.name}}</div>
+                <div class="group-line-long"></div>
+            </div>
+            <!-- 属性 -->
+            <div v-if="!!modulePropertyData&&modulePropertyData.isShowModuleProperty">
+                <div v-for="entry in group.children">
+                    <div v-bind:class="['admin-grid-cell-12 dddd',entry.hidden ? 'workflow-hidden' :''  ]" v-if="entry.pageElement=='InputText'">
+                        <admin-input v-bind:class="['workflow-edit-property-panel-field',hasVariable(entry)?'workflow-edit-property-panel-field-variable':'' ]"
+                            v-model="entry.value" :label="displayLabelText(entry)" placeholder="" :warnings="entry.warnings"
+                            :small="true" :disabled="!isEditable" @input='inputEvent(entry.value,entry.name)'></admin-input>
+                        <Variable :option="entry"></Variable>
+                    </div>
+                    <div v-bind:class="['admin-grid-cell-12',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='Radio'">
+                        <ad-select-async class="workflow-edit-property-panel-field" v-model="entry.value" :label="displayLabelText(entry)" placeholder=""
+                            @input="selectEvent(entry.value,entry.name)" :options="transformOptionList(entry.pageOptionList)"
+                            :disabled="!isEditable" :small="true"></ad-select-async>
+                    </div>
+                    <div v-bind:class="['admin-grid-cell-12',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='TextArea'||entry.pageElement=='Password'">
+                        <admin-input v-bind:class="['workflow-edit-property-panel-field',hasVariable(entry)?'workflow-edit-property-panel-field-variable':'' ]"
+                            v-model="entry.value" :label="displayLabelText(entry)" placeholder="" :type="pageElement2Type(entry.pageElement)"
+                            :small="true" :disabled="!isEditable" :warnings="entry.warnings" @input='inputEvent(entry.value,entry.name)'></admin-input>
+                        <Variable :option="entry"></Variable>
+                        <!--<div v-if="entry.variable&&entry.variable!=''" style="font-size: 12px;padding:10px 0;width: 375px;margin-bottom: 15px;">
+                                    <div><span style="padding-right:10px;display: inline-block;margin:3px 0;">提示：{{entry.name}}中可使用的变量</span> <i v-bind:class="['workflow-edit-property-variable-icon',entry.isShowVariable ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" @click="clickShowVariable(entry,$event)"></i></div>
+                                    <div class="panel" style="display: none;">
+                                        <div class="chorus-text-ellipsis" v-for="obj in str2Arr(entry.variable)"  style="border-bottom: 1px solid #efefef;margin-bottom: 10px;padding-bottom: 10px;">
+                                            <div class="chorus-text-ellipsis" :title="obj.name" style="height:20px;line-height: 20px;margin:3px 0;">变量名称：{{obj.name}}</div>
+                                            <div class="chorus-text-ellipsis" :title="obj.desc" style="height:20px;line-height: 20px;margin:3px 0;">变量描述：{{obj.desc}}</div>
+                                        </div >
+                                    </div>
+
+                                </div>-->
+                    </div>
+                    <div v-bind:class="['admin-grid-cell-12',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='MultiInputText'">
+                        <admin-input class="workflow-edit-property-panel-field" v-model="entry.value" :label="displayLabelText(entry)" placeholder=""
+                            :small="true" :disabled="!isEditable" @input='inputEvent(entry.value,entry.name)'></admin-input>
+
+
+                    </div>
+                    <div v-bind:class="['admin-grid-cell-12',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='DropDown'">
+                        <ad-select-async class="workflow-edit-property-panel-field" v-model="entry.value" :label="displayLabelText(entry)" placeholder=""
+                            @input="selectEvent(entry.value,entry.name)" :options="displayOptions(entry.options)" :disabled="!isEditable"
+                            :small="true"></ad-select-async>
+
+
+                    </div>
+
+                    <div v-bind:class="['admin-grid-cell-12',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='InputTextButton'">
+                        <admin-input v-bind:class="['workflow-edit-property-panel-field',hasVariable(entry)?'workflow-edit-property-panel-field-variable':'' ]"
+                            v-model="entry.value" :label="displayLabelText(entry)" placeholder="" :warnings="entry.warnings"
+                            :small="true" :disabled="!isEditable" @input='inputEvent(entry.value,entry.name)'></admin-input>
+                        <button @click="showModal" class="chorus-button admin-small">确定</button>
+                    </div>
+                </div>
+            </div>
+            <!-- map-->
+            <div class="admin-grid-cell-12" v-if="!!modulePropertyData && modulePropertyData.isShowModuleProperty">
+                <!-- 属性 -->
+                <div  v-if="modulePropertyData&&modulePropertyData.isShowModuleProperty&&modulePropertyData.options.length>1">
+                    <div v-for="entry in group.children">
+                        <!--Map -->
+                        <div v-bind:class="['admin-grid-cell-6',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='MultiPairInputText'"
+                            style="margin-bottom: 25px">
+                            <div style="height:12px;margin-bottom: 8px;font-size: 12px;">{{displayLabelText(entry)}}</div>
+                            <div v-if="entry.maps.length>0">
+                                <div v-for="(map, index) in entry.maps" class="workflow-edit-property-maps-row">
+                                    <admin-input class="workflow-edit-property-panel-field-key" v-model="map.keyName" placeholder="" :small="true" :disabled="true"
+                                        @input='inputEvent(map.keyName,entry.name)'></admin-input> :
+                                    <admin-input class="workflow-edit-property-panel-field-val" v-model="map.keyValue" placeholder="" :small="true" :disabled="!isEditable"
+                                        @input='inputEvent(map.keyValue,entry.name)'></admin-input>
+                                    <!-- <i @click="removeMapRec(entry.name,index)" style="color:#0e9ee2;cursor: pointer;" class="ion-minus-round" v-if="index!==entry.maps.length-1"></i>
+                                <i @click="addMapRec(entry.name)" style="color:#0e9ee2;cursor: pointer;" class="ion-plus-round" v-if="index==entry.maps.length-1&&entry.maps.length<=entry.sizeMax-1"></i>
+                                -->
+                                    <div v-if="index==entry.maps.length-1&&entry.warnings" style="font-size: 12px;color: #f35555;">
+                                        {{entry.warnings[0]}}
+                                    </div>
+                                </div>
+                            </div>
+                            <Variable :option="entry"></Variable>
+                        </div>
+                        <!--MultiPairTable -->
+                        <div v-bind:class="['admin-grid-cell-6',entry.hidden ? 'workflow-hidden' :'' ]" v-if="entry.pageElement=='MultiPairTable'"
+                            style="margin-bottom: 25px">
+                            <div style="height:12px;margin-bottom: 8px;font-size: 12px;">{{displayLabelText(entry)}}</div>
+                            <div v-if="entry.maps&&entry.maps.length>0">
+                                <div v-for="(map, index) in entry.maps" class="workflow-edit-property-maps-row">
+                                    <admin-input v-if="map.original" class="workflow-edit-property-panel-field-key" v-model="map.keyName" placeholder="" :small="true"
+                                        :disabled="true" @input='inputEvent(map.keyName,entry.name)'></admin-input>
+                                    <ad-select-async v-else class="workflow-edit-property-panel-field-val workflow-edit-property-panel-field" v-model="map.keyName"
+                                        :tips="true" placeholder="" @input="inputEvent(map.keyName,entry.name)" :options="displayOptions(entry.tableKeyOptions)"
+                                        :disabled="!isEditable" :small="true"></ad-select-async><i class="ion-arrow-left-c" style="padding:0px 0px 0 4px;"></i>
+                                    <ad-select-async class="workflow-edit-property-panel-field-val workflow-edit-property-panel-field" v-model="map.keyValue"
+                                        :tips="true" placeholder="" @input="inputEvent(map.keyValue,entry.name)" :options="displayOptions(entry.options)"
+                                        :disabled="!isEditable" :small="true"></ad-select-async>
+                                    <i @click="removeMapTableRec(entry.name,index)" style="color:#0e9ee2;cursor: pointer;" :class='["ion-minus-round",!isEditable?"chorus-hidden":""]'></i>
+                                    <div :class='[!isEditable?"chorus-hidden":""]'>
+                                        <i @click="addMapTableRec(entry.name)"   style="color:#0e9ee2;cursor: pointer;"  class="ion-plus-round"
+                                            v-if="index==entry.maps.length-1&&entry.maps.length<=entry.sizeMax-1"></i></div>
+                                    <div v-if="index==entry.maps.length-1&&entry.warnings" style="font-size: 12px;color: #f35555;">
+                                        {{entry.warnings[0]}}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else style="font-size: 12px;">
+                                <div class="workflow-edit-property-maps-row">
+                                    <div><i @click="addMapTableRec(entry.name)" style="color:#0e9ee2;cursor: pointer;font-size: 16px;"
+                                            class="ion-plus-round"></i></div>
+                                    <div v-if="entry.warnings" style="font-size: 12px;color: #f35555;">
+                                        {{entry.warnings[0]}}
+                                    </div>
+                                </div>
+                            </div>
+                            <Variable :option="entry"></Variable>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <!-- 规则 都是从后台获取
+        <div class="admin-grid-cell-12" v-if="workflowType=='2'&&!!modulePropertyData&&modulePropertyData.isShowModuleProperty">
+            <div>
+                <admin-input class="workflow-edit-property-panel-field" v-if="!!modulePropertyData"
+                             v-model="modulePropertyData.retryCount"
+                             label="重试次数"
+                             placeholder=""
+                             :small="true"
+                             :warnings="modulePropertyData.retryCountWarnings"
+                             :disabled="!isEditable"
+                             @input='paramsInputEvent(modulePropertyData.retryCount,"retryCount")'></admin-input>
+            </div>
+            <div> <admin-input class="workflow-edit-property-panel-field" v-if="!!modulePropertyData"
+                   v-model="modulePropertyData.timeoutSeconds"
+                   label="超时时间(秒)"
+                   placeholder=""
+                   :small="true"
+                   :warnings="modulePropertyData.timeoutSecondsWarnings"
+                   :disabled="!isEditable"
+                   @input='paramsInputEvent(modulePropertyData.timeoutSeconds,"timeoutSeconds")'></admin-input></div>
+            <div>
+                <ad-select class="workflow-edit-property-panel-field"
+                           v-model="modulePropertyData.timeoutPolicy"
+                           label="超时策略"
+                           placeholder=""
+                           @input='paramsInputEvent(modulePropertyData.timeoutPolicy,"timeoutPolicy")'
+                           :options="modulePropertyData.timeoutPolicyOptions"
+                           :disabled="!isEditable"
+                           :small="true"></ad-select></div>
+        </div>
+        -->
+
+
+    </div>
+    <div v-if="modulePropertyData&&variableslist" class="admin-grid-cell-12" v-show="variableslist.length">
+        <div style="border-bottom:1px solid #dfe1e5; font-size: 14px;padding: 0px 0px 5px 5px;"><span>变量绑定</span></div>
+        <div class="admin-grid-container" style="padding: 10px;">
+            <div v-for="varibs in variableslist" class="admin-grid-cell-12">
+                <admin-input class="workflow-edit-property-panel-field workflow-edit-property-variable-title-text" style="width:100%;" v-model="varibs.value"
+                    :label="varibs.key" placeholder="" value="" :disabled="!isEditable" @input='inputEventvar(varibs.key,varibs.value)'>
+                    :small="true"></admin-input>
+            </div>
+        </div>
+    </div>
+</div>

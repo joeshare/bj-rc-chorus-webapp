@@ -1,0 +1,33 @@
+<div class="chorus-data-meta-detail">
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div style="width: 100%;display: inline-block;">
+        <div class="detail admin-grid-container" style="font-size:xx-large;display: inline-block; margin-left: 10px;">
+            {{currentRecorder.tableName}}
+        </div>
+        <button class="create-data-table-button admin-small"  @click="returnBack()">返回</button>
+    </div>
+    <div class="chorus-text-ellipsis" style="width: 100%; display: inline-block;margin: 10px 0 10px 10px;  font-size: large;">
+        {{currentRecorder.tableDesc}}
+    </div>
+    <ad-tabs :tabs="tabs" :current-tab-name="activeTabId" style="height:400px" @toggle-tab="toggleTab">
+        <div name="baseInfo" class="admin-tabs-content" >
+            <base-info :table-id="tableId" ref="baseInfoapp" @call-back="tableInfoCallBack"></base-info>
+        </div>
+        <div name="fieldInfo" class="admin-tabs-content" >
+            <field-info :table-id="tableId" ></field-info>
+        </div>
+        <div name="exampleData" class="admin-tabs-content">
+            <example-data :table-id="tableId" ref="fieldInfoapp"></example-data>
+        </div>
+        <div name="blood" class="admin-tabs-content" >
+            <ad-spinner type="circle" color="#0e9ee2" v-show="!isHiddenLoading" style="position: absolute;width: 30px;height: 30px;"></ad-spinner>
+            <div style="position: absolute;left:0;right:0;display: none;color: #6f7073;font-size: 14px; text-align: center;    padding-top: 24px;
+    padding-left: 18px;" id="nodatas">暂无数据</div>
+            <canvas id="meta-data-canvas" width="716px" height="368px">请使用chrome或firefox最新版本浏览器</canvas>
+
+        </div>
+    </ad-tabs>
+    <div  class="chorus-mark-loading" v-show="isShowMarkLoading">
+        <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+    </div>
+</div>

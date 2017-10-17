@@ -1,0 +1,373 @@
+<div class="chorus-data-table-management">
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div style="width: 100%;display: inline-block;">
+        <div v-if="showmodel=='detail'"  class="detail admin-grid-container" style="font-size:xx-large;display: inline-block; margin-left: 10px;">
+            {{dataTableDetail.tableName}}
+        </div>
+        <button class="create-data-table-button admin-small"  @click="returnback()">返回</button>
+    </div>
+    <div v-if="showmodel!='detail'" class="create admin-grid-container">
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="表名称"
+                    :disabled="showmodel=='update'"
+                    placeholder=""
+                    :warnings="createDataTableQuerys.tablenameWarnings"
+                    :small="true"
+                    v-model="createDataTableQuerys.tableName" @keyup="clearwarnings(createDataTableQuerys.tablenameWarnings)"></ad-input>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-select
+                    class="create-form-el"
+                    label="数据域"
+                    :small="true"
+                    v-model="createDataTableQuerys.dataField"
+                    :options="createDataTableOptions.dataAreaOptions"></ad-select>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-select
+                    class="create-form-el"
+                    label="表类型 "
+                    :small="true"
+                    :options="createDataTableOptions.tableTypeOptions"
+                    v-model="createDataTableQuerys.tableType"></ad-select>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-select
+                    class="create-form-el"
+                    label="安全等级"
+                    :small="true"
+                    v-model="createDataTableQuerys.securityLevel"
+                    :options="createDataTableOptions.securityGradeOptions"></ad-select>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-select
+                    class="create-form-el"
+                    label="时效性"
+                    :small="true"
+                    v-model="createDataTableQuerys.updateFrequence"
+                    :options="createDataTableOptions.timelinessOptions"></ad-select>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="SLA"
+                    placeholder=""
+                    :warnings="createDataTableQuerys.slaWarnings"
+                    :small="true"
+                    @keyup="clearwarnings(createDataTableQuerys.sla)"
+                    v-model="createDataTableQuerys.sla"></ad-input>
+        </div>
+        <div class="admin-grid-cell-6 create-form-el-container">
+            <ad-radio
+                    label="是否支持快照"
+                    v-model="createDataTableQuerys.isSnapshot"
+                    :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+        </div>
+        <div class="admin-grid-cell-6 create-form-el-container">
+            <ad-radio
+                    label="是否对外开放"
+                    v-model="createDataTableQuerys.isOpen"
+                    :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    type="textarea"
+                    label="表描述"
+                    placeholder=""
+                    :small="true"
+                    :warnings="createDataTableQuerys.desWarnings"
+                    @input="inputTableDes"
+                    v-model="createDataTableQuerys.tableDes"></ad-input>
+        </div>
+
+        <div class="admin-grid-cell-12" style="border-top:1px solid #ccc; margin-top: 10px;margin-bottom: 20px;"></div>
+        <button class="admin-small new-field-button" @click="insertNewField('no')">增加字段</button>
+
+        <div style="margin-left: 100px;" v-if="showmodel=='create'">
+          <span style="font-size: 14px;margin-right: 10px;line-height: 28px;">创建方式：</span>
+           <ad-select class="field-table-form-el" style="margin-right: 10px;width: 140px; vertical-align: bottom;" v-model="createType" :small="true"  :options="createTypeOptions"></ad-select>
+            <div v-if="createType=='y'" style="display: inline-block;">
+                <ad-sug-input class=""
+                              v-model="createType_RDB_V"
+                              :associations="associations_RDB"
+                              :small="true"
+                              placeholder=""
+                              @toggle-select="sugSelectClick($event,'rdb')"
+                              @click="sugChangeInput($event,'rdb')"
+                              @input="sugChangeInput($event,'rdb')"
+                ></ad-sug-input>
+
+                <ad-sug-input class=""
+                              v-model="createType_Table"
+                              :associations="associations_Table"
+                              :small="true"
+                              placeholder=""
+                              @toggle-select="sugSelectClick($event,'table')"
+                              @click="sugChangeInput($event,'table')"
+                              @input="sugChangeInput($event,'table')"
+                ></ad-sug-input>
+
+               <!-- <ad-select class="field-table-form-el" @change="changeRDB" style="margin-right: 10px;width: 140px; vertical-align: bottom;" :small="true"  v-model="createType_RDB"  :options="createTypeOptions_RDB"></ad-select>
+                <ad-select class="field-table-form-el" @change="changeTable" style="margin-right: 10px;width: 240px; vertical-align: bottom;" :small="true" v-model="createType_Table"  :options="createTypeOptions_Table"></ad-select>-->
+                <button class="admin-small" style="margin-right: 10px;"  @click="importdata()">生成字段</button>
+            </div>
+        </div>
+        <div class="field-table-container">
+            <table class="admin-table admin-stripedd field-table" style="width: 100%;">
+                <thead>
+                <tr>
+                    <th>字段名称</th>
+                    <th>字段类型</th>
+                    <th>字段长度</th>
+                    <th width="120px;">是否主键</th>
+                    <th>是否外键</th>
+                    <th>是否为空</th>
+                    <th>是否索引</th>
+                    <th>字段说明</th>
+                    <th>安全等级</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(field,key,index) in createDataTableQuerys.columnInfoList" v-show="field.isPartitionKey ==0">
+                    <td  style="max-width: 100px; overflow: hidden;">
+                        <ad-input  placeholder=""  :small="true" style="min-width: 80px;" :disabled="field.isOlddate" :warnings="field.nameWarnings"  @keyup="clearwarnings(field.nameWarnings)"  class="field-table-form-el" v-model="field.columnName"></ad-input>
+                    </td>
+                    <td  style="width: 100px;">
+                        <ad-select class="field-table-form-el" :small="true" :disabled="field.isOlddate" v-model="field.columnType" :options="createDataTableOptions.fieldType"></ad-select>
+                    </td>
+                    <td  style="width: 100px; overflow: hidden;">
+                        <ad-input  placeholder=""  :small="true" style="min-width: 80px;" :disabled="field.isOlddate" class="field-table-form-el"  @keyup="clearwarnings(field.lengthWarnings)"  :warnings="field.lengthWarnings"  v-model="field.columnLength"></ad-input>
+                    </td>
+                    <td  style="width: 100px; overflow: hidden;">
+                        <ad-radio style="width:140px;" class="field-table-form-radio-td" :disabled="field.isOlddate" v-model="field.isKey" :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+                    </td>
+                    <td  style="width: 100px; overflow: hidden;">
+                        <ad-radio style="width:140px;" class="field-table-form-radio-td" :disabled="field.isOlddate" v-model="field.isRefKey" :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+                    </td>
+                    <td  style="width: 100px; overflow: hidden;">
+                        <ad-radio style="width:140px;" class="field-table-form-radio-td" :disabled="field.isOlddate" v-model="field.isNull" :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+                    </td>
+                    <td  style="width: 100px; overflow: hidden;">
+                        <ad-radio style="width:140px;" class="field-table-form-radio-td" :disabled="field.isOlddate" v-model="field.isIndex" :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>
+                    </td>
+                    <td style="width: 100px; overflow: hidden;">
+                        <ad-input  placeholder=""  :small="true" style="min-width: 80px;" :disabled="field.isOlddate" :warnings="field.desWarnings"   class="field-table-form-el" v-model="field.columnDesc"></ad-input>
+                    </td>
+                    <td style="width: 35px;">
+                        <ad-select class="field-table-form-el" style="width: 40px;" :small="true" :disabled="field.isOlddate" v-model="field.securityLevel" :options="createDataTableOptions.securityGradeOptions"></ad-select>
+                    </td>
+                    <td style="max-width: 30px; text-align: center;">
+                        <button class="admin-small" :disabled="field.isOlddate" @click="deleteField('no',field)">删除</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px;width: 100%;border-top:1px solid #ccc;">
+            <div style="margin-top: 20px;" v-show="showmodel=='create'||showmodel=='update'">
+                <button :disabled="showmodel=='update'" class="admin-small new-field-button" @click="insertNewField('yes')">增加分区</button>
+                <div class="chorus-grid-wrapper chorus-grid field-table-container">
+                    <table class="admin-table admin-stripedd field-table" style="max-width:753px;">
+                        <thead>
+                        <tr>
+                            <th>字段名称</th>
+                            <th>字段类型</th>
+                            <th>字段描述</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        <tr v-for="(field,key,index) in createDataTableQuerys.columnInfoList"  v-show="field.isPartitionKey ==1">
+                            <td style="max-width: 200px; overflow: hidden;">
+                                <ad-input  placeholder=""   :disabled="field.columnName=='p_date'||showmodel=='update'" :small="true"   :warnings="field.nameWarnings"  class="field-table-form-el" v-model="field.columnName"></ad-input>
+                            </td>
+                            <td  style="overflow: inherit;">
+                                <ad-select class="field-table-form-el"  :disabled="field.columnName=='p_date'||showmodel=='update'" :small="true" v-model="field.columnType" :options="createDataTableOptions.fieldType"></ad-select>
+                            </td>
+                            <td  style="max-width: 200px; overflow: hidden;">
+                                <ad-input  placeholder="" :disabled="field.columnName=='p_date'||showmodel=='update'"  :small="true"  :warnings="field.desWarnings"   class="field-table-form-el" v-model="field.columnDesc"></ad-input>
+                            </td>
+
+                            <td style="max-width: 30px; text-align: center;">
+                                <button :disabled="showmodel=='update'" class="admin-small" v-show="field.columnName!='p_date'" @click="deleteField('yes',field)">删除</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="margin-top: 10px; width: 100%;">
+            <button class="create-data-table-button admin-small"  @click="createdata()">{{showmodel=='create'?'创建':'修改'}}</button>
+            <button class="create-data-table-button admin-small" style="margin-right: 10px;" @click="returnback()">取消</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div v-if="showmodel=='detail'"  class="detail admin-grid-container">
+        <div class="admin-grid-cell-12" style="margin-left: 10px; margin-top: 10px; font-size: large;">{{dataTableDetail.tableDes}}</div>
+        <span class="admin-grid-cell-12 admin-small" style="margin-top: 20px; padding-left:10px; position: relative; height: 20px;">
+            <span style="display: inline-block;position: absolute;top:0px; background-color: white;z-index: 100;">基本信息&nbsp;</span>
+            <span style="border-bottom: 1px solid #ccc;width: 100%;top:8px;position: absolute;">
+            </span>
+        </span>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="数据域"
+                    :small="true"
+                    :disabled="true"
+                    v-model="dataTableDetail.dataField"></ad-input>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="表类型"
+                    :small="true"
+                    :disabled="true"
+                    v-model="dataTableDetail.tableType"></ad-input>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="安全等级"
+                    :disabled="true"
+                    :small="true"
+                    v-model="dataTableDetail.securityLevel"></ad-input>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="时效性"
+                    :disabled="true"
+                    :small="true"
+                    v-model="dataTableDetail.updateFrequence"></ad-input>
+        </div>
+        <div class="admin-grid-cell-12 create-form-el-container">
+            <ad-input
+                    class="create-form-el"
+                    label="SLA"
+                    :disabled="true"
+                    :small="true"
+                    v-model="dataTableDetail.sla"></ad-input>
+        </div>
+        <div class="admin-grid-cell-6 create-form-el-container">
+            <span style="font-size: 14px;"><span style="font-size: 12px;">是否支持快照：</span>{{dataTableDetail.isSnapshot==1?'是':'否'}}</span>
+           <!-- <ad-radio
+                    label="是否支持快照"
+                    :disabled="true"
+                    v-model="dataTableDetail.isSnapshot"
+                    :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>-->
+        </div>
+        <div class="admin-grid-cell-6 create-form-el-container">
+            <span  style="font-size: 14px;"><span style="font-size: 12px;">是否对外开放：</span>{{dataTableDetail.isOpen?'是':'否'}}</span>
+            <!--<ad-radio
+                    label="是否对外开放"
+                    :disabled="true"
+                    v-model="dataTableDetail.isOpen"
+                    :radios="[{ text: '是', value: 1 }, { text: '否', value: 0 }]"></ad-radio>-->
+        </div>
+
+         <span class="admin-grid-cell-12 admin-small" style="margin-top: 20px; padding-left:10px;  position: relative; height: 20px;">
+            <span style="display: inline-block;position: absolute;top:0px; background-color: white;z-index: 100;">字段信息&nbsp;</span>
+            <span style="border-bottom: 1px solid #ccc;width: 100%;top:8px;position: absolute;">
+            </span>
+        </span>
+        <div class="field-table-container detail">
+            <table class="admin-table admin-stripedd" style="width: 100%;">
+                <thead>
+                <tr>
+                    <th>字段名称</th>
+                    <th>字段类型</th>
+                    <th>字段长度</th>
+                    <th>是否主键</th>
+                    <th>是否外键</th>
+                    <th>是否为空</th>
+                    <th>是否索引</th>
+                    <th>字段说明</th>
+                    <th>安全等级</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="field in dataTableDetail.columnInfoList"  v-show="field.isPartitionKey ==0">
+                    <td  style="max-width: 200px; overflow: hidden;">
+                        {{field.columnName}}
+                    </td>
+
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.columnType}}
+                    </td>
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.columnLength}}
+                    </td>
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.isKey==1?'是':'否'}}
+                    </td>
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.isRefKey==1?'是':'否'}}
+                    </td>
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.isNull==1?'是':'否'}}
+                    </td>
+                    <td  style="max-width: 50px; overflow: hidden;">
+                        {{field.isIndex==1?'是':'否'}}
+                    </td>
+                    <td  style="max-width: 200px; overflow: hidden;">
+                        {{field.columnDesc}}
+                    </td>
+                    <td>
+                        {{field.securityLevel}}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div v-show="showfengqu" style="margin-top: 15px;">
+              <span class="admin-grid-cell-12 admin-small" style="margin-top: 20px;padding-left:10px;   position: relative; height: 20px;">
+                <span style="display: inline-block;position: absolute;top:0px; background-color: white;z-index: 100;">分区信息&nbsp;</span>
+                 <span style="border-bottom: 1px solid #ccc;width: 100%;top:8px;position: absolute;"></span>
+              </span>
+            <div class="field-table-container detail">
+                <table class="admin-table admin-stripedd"  style="min-width:653px;">
+                    <thead>
+                    <tr>
+                        <th>字段名称</th>
+                        <th>字段类型</th>
+                        <th>字段说明</th>
+                        <th>分区类型</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="field in dataTableDetail.columnInfoList"  v-show="field.isPartitionKey ==1">
+                        <td  style="max-width: 200px; overflow: hidden;">
+                            {{field.columnName}}
+                        </td>
+                        <td>
+                            {{field.columnType}}
+                        </td>
+                        <td  style="max-width: 200px; overflow: hidden;">
+                            {{field.columnType}}
+                        </td>
+                        <td v-if="field.columnName=='p_date'">
+                            静态分区
+                        </td>
+                        <td v-else>
+                            动态分区
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div  class="chorus-mark-loading" v-show="isShowMarkLoading">
+        <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+    </div>
+</div>

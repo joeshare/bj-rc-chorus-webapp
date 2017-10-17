@@ -1,0 +1,14 @@
+<div class="workflow-component-maps-wrapper"  style="padding:10px 0 0 0;">
+    <div v-for="(task, index) in maps" v-if="maps.length>0">
+        <div style="height: 25px; border-bottom:1px solid #ebedf2;margin-bottom: 10px;padding-bottom: 5px; ">{{task.name}}：</div>
+        <div v-for="(map, index) in task.value" v-if="maps.length>0">
+            <span style="width:150px;display: inline-block; font-size: 12px;">{{map.keyName}}</span> :
+            <admin-input class="workflow-component-maps-panel-field-val"
+                         v-model="map.keyValue"
+                         placeholder=""
+                         :small="true"
+                         @input='inputEvent(map)'></admin-input>
+
+        </div>
+    </div>
+</div>

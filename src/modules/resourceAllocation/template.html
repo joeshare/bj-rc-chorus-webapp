@@ -1,0 +1,313 @@
+<div class="resource-allocation">
+    <nav-bar :nav-list="navlist" ></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            <span style="float:left; margin-right:10px;">可用资源：</span>
+            <div class="res_info"><span>CPU：</span><span>{{theResource.CPU}}</span></div>
+            <div class="res_info"><span>内存：</span><span>{{theResource.RAM}}</span></div>
+            <div class="res_info" style="display:none;"><span>存储：</span><span>{{theResource.storage}}</span></div>
+        </div>
+        <div class="toolbar-r">
+            <button @click="showModal"  class="chorus-button admin-small">申请资源</button>  <button @click="showDetailModal" class="chorus-button admin-small">申请历史</button>
+        </div>
+
+    </div>
+    <div class="chorus-grid-wrapper">
+        <div class="res_con"></div>
+    </div>
+
+
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            已创建容器：
+        </div>
+        <div class="toolbar-r">
+            <div @click="showConModal"><button class="chorus-button admin-small">创建容器</button></div>
+        </div>
+    </div>
+
+    <div class="chorus-grid-wrapper">
+        <table class="admin-table admin-striped">
+            <thead>
+            <tr>
+                <th>名称</th>
+                <th>模版</th>
+                <th>环境</th>
+                <th>数量</th>
+                <th>状态</th>
+                <th style="width:400px;">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="item in dataList">
+                <td>{{item.groupName}}</td>
+                <td>{{item.resourceTemplate.resourceCpu}}C , {{item.resourceTemplate.resourceMemory}}G</td>
+                <td>
+                    <template v-for="env in item.environmentInfoList">
+                        {{env.environmentName}} &nbsp;
+                    </template>
+                </td>
+                <td>{{item.instanceSize}}</td>
+                <td>{{item.commonStatus.statusName}}</td>
+                <td>
+                        <button class="chorus-button admin-small" @click="oper(item,'start')" :disabled='item.commonStatus.statusCode==="2102"|| item.commonStatus.statusCode ==="2104"||item.commonStatus.statusCode==="2117"'>{{item.commonStatus.statusCode==="2117"?'启动中':'启动'}}</button>
+                        <button class="chorus-button admin-small" @click="showAdjustment(item)" :disabled="item.commonStatus.statusCode !='2102'||item.commonStatus.statusCode==='2117'">调整</button>
+                        <button class="chorus-button admin-small" @click="oper(item,'stop')" :disabled="item.commonStatus.statusCode !='2102'&&item.commonStatus.statusCode!='2117'">停止</button>
+                        <button class="chorus-button admin-small" @click="oper(item,'destroy')" :disabled="item.commonStatus.statusCode =='2102' || item.commonStatus.statusCode ==='2104'||item.commonStatus.statusCode==='2117'">销毁</button> 
+                </td>
+            </tr>
+            <tr v-if="dataList.length === 0"><td colspan="6" style="text-align: center;">暂无数据</td></tr>
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+    </div>
+    <div  style="text-align: right;">
+        <ad-paginator :total-count="pager.totalCount" :page-size="pager.pageSize" :current-page="pager.currentPage"  @toggle-page="togglePage($event)"></ad-paginator>
+    </div>
+
+    <ad-modal
+            title="申请资源"
+            :display="modalDisplay"
+            width="580px"
+            height="500px"
+            :buttons="[
+          {
+            text: '取消',
+            name: 'cancel',
+            buttonClass:'admin-small',
+            handler: 'cancelApply'
+           },
+          {
+            text: '保存',
+            name: 'save',
+            buttonClass:'admin-small',
+            handler: saveRes
+        }]"
+
+            @admin-modal-off="cancelApply">
+        <div class="resource-allocation "  style="padding:10px;">
+            <div style=" padding:10px;">
+                <ad-input
+                        label="CPU(C)："
+                        placeholder=""
+                        :warnings="applyWarningsMap['CPU']"
+                        @blur="validateNotEmptyApply(addInfo.CPU, 'CPU')"
+                        v-model="addInfo.CPU" ></ad-input>
+            </div>
+            <div style=" padding:10px;">
+                <ad-input
+                        label="内存(G)："
+                        placeholder=""
+                        :warnings="applyWarningsMap['RAM']"
+                        @blur="validateNotEmptyApply(addInfo.RAM, 'RAM')"
+                        v-model="addInfo.RAM" ></ad-input>
+            </div>
+            <div style=" padding:10px;">
+                <ad-input
+                        label="存储(G)："
+                        placeholder=""
+                        :warnings="applyWarningsMap['storage']"
+                        @blur="validateNotEmptyApply(addInfo.storage, 'storage')"
+                        v-model="addInfo.storage"></ad-input>
+            </div>
+            <div style=" padding:10px;">
+                <ad-input
+                        type="textarea"
+                        label="申请用途："
+                        placeholder=""
+                        @keyup="txtAreaVali"
+                        :warnings="applyWarningsMap['purpose']"
+                        v-model="addInfo.purpose"></ad-input>
+            </div>
+        </div>
+    </ad-modal>
+    <ad-modal
+            title="申请历史"
+            :display="detail_modalDisplay"
+            width="980px"
+            height="600px"
+            :buttons="[ {
+          text: '确定',
+          name: 'cancel',
+          buttonClass:'admin-small',
+          handler: 'closeApplyHistory'
+      }]"
+            @admin-modal-off="closeApplyHistory">
+        <div class="history resource-allocation" style="padding:10px;">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>申请时间</th>
+                    <th>申请资源</th>
+                    <th>申请原因</th>
+                    <th>处理时间</th>
+                    <th>处理人</th>
+                    <th>处理结果</th>
+                    <th>备注</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="item in ProsecutionData">
+                    <td>{{item.createTime}}</td>
+                    <td>CPU:{{item.cpu}} C&nbsp;&nbsp;内存:{{item.memory}} G&nbsp;&nbsp;存储:{{item.storage}} G</td>
+                    <td>{{item.reason}}</td>
+                    <td>{{item.updateTime}}</td>
+                    <td>{{item.updateUserName}}</td>
+                    <td>{{item.statusDesc}}</td>
+                    <td>{{item.notes}}</td>
+                </tr>
+                <tr v-if="ProsecutionData.length === 0"><td colspan="7" style="text-align: center;">暂无数据</td></tr>
+                </tbody>
+                <tfoot>
+                <tr v-if="!ProsecutionData || ProsecutionData.leng == 0">
+                    <td colspan="7" ></td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </ad-modal>
+    <ad-modal
+            title="创建容器"
+            :display="con_modalDisplay"
+            width="580px"
+            height="560px"
+            :buttons="[
+          {
+            text: '取消',
+            name: 'cancel',
+            buttonClass:'admin-small',
+            handler: 'closeConDialog'
+        },
+        {
+            text: '保存',
+            name: 'save',
+            buttonClass:'admin-small',
+            handler: createCon
+        }]"
+            @admin-modal-off="closeConDialog">
+
+        <div class="resource-allocation" style="padding:10px;">
+            <div style="padding:10px;">
+                <ad-input
+                        label="容器名称："
+                        placeholder=""
+                        :warnings="conWarningsMap['name']"
+                        @blur="validateNotEmpty(addCon.name, 'name')"
+                        v-model="addCon.name"></ad-input>
+            </div>
+            <div style="padding:10px;" class="create-template">
+                <ad-select
+                        v-model="utilValue"
+                        :options="utils"
+                        label="容器模版："
+                        placeholder=""
+                        :small="true">
+                </ad-select>
+            </div>
+            <div style="padding:10px;">
+                <ad-checkbox
+                        label="容器环境："
+                        :warnings="conWarningsMap['environment']"
+                        @change="validateCheckBox"
+                        v-model="checkboxValues"
+                        :checkboxes="checkboxes"></ad-checkbox>
+
+            </div>
+            <div style="padding:10px;">
+                <ad-input
+                        label="容器数量："
+                        placeholder=""
+                        :warnings="conWarningsMap['count']"
+                        @blur="validateNotEmpty(addCon.count, 'count')"
+                        v-model="addCon.count"></ad-input>
+            </div>
+            <div style="padding:10px;">
+                <ad-input
+                        type="textarea"
+                        label="容器备注："
+                        placeholder=""
+                        :warnings="conWarningsMap['remark']"
+                        @keyup="validateNotEmpty(addCon.remark, 'remark')"
+                        v-model="addCon.remark"></ad-input>
+            </div>
+        </div>
+    </ad-modal>
+    <ad-modal
+            title="容器调整"
+            :display="adjustment_modalDisplay"
+            width="584px"
+            height="580px"
+            :buttons="[
+          {
+            text: '取消',
+            name: 'cancel',
+            buttonClass:'admin-small',
+            handler: 'closeAdjustDialog'
+        },{
+            text: '保存',
+            name: 'save',
+            buttonClass:'admin-small',
+            handler: adjustment
+        }]"
+            @admin-modal-off="closeAdjustDialog">
+        <div class="resource-allocation"  style="padding:10px;">
+            <div style="padding:10px;">
+                <ad-input
+                        label="容器名称："
+                        placeholder=""
+                        :disabled="true"
+                        v-model="adjustmentObject.name"></ad-input>
+            </div>
+            <div style="padding:10px;">
+                <ad-select
+                        v-model="adjustTemplateId"
+                        :options="utils"
+                        label="容器模版："
+                        :disabled="true"
+                        :small="true">
+                </ad-select>
+
+            </div>
+            <div style="padding:10px;">
+                <ad-checkbox
+                        label="容器环境："
+                        :disabled="true"
+                        v-model="checkboxValues"
+                        :checkboxes="checkboxes"></ad-checkbox>
+            </div>
+            <div style="padding:10px;">
+                <ad-input
+                        label="容器数量："
+                        placeholder=""
+                        type="text"
+                        :warnings="adCount['count']"
+                        @blur="validateInstanceSize('count')"
+                        v-model="adjustmentObject.count"
+                        ></ad-input>
+            </div>
+            <div style="padding:10px;">
+                <ad-input
+                        type="textarea"
+                        label="容器备注："
+                        :disabled="true"
+                        placeholder=""
+                        v-model="adjustmentObject.remark"></ad-input>
+            </div>
+        </div>
+
+    </ad-modal>
+    <div style="display: none;">
+        <div id="data-resourceAll-spinner" style="position: fixed;
+        width: 100%;height: 100%;
+        padding-left:45%;
+        padding-top: 20%;
+        display: flex;
+        flex-flow: row;
+        z-index: 999999;
+        background-color:rgba(0,0,0,.75)">
+            <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+        </div>
+    </div>
+</div>

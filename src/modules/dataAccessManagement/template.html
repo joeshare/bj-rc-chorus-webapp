@@ -1,0 +1,303 @@
+<div class="data-access-management">
+    <nav-bar :nav-list="navlist" ></nav-bar>
+
+    <ad-tabs :tabs="tabs" :current-tab-name="activeTabId" style="height:400px">
+        <div name="waitingOper" id="waitingOper" >
+            <div class="chorus-grid">
+                <table class="admin-table admin-striped">
+                    <thead>
+                    <tr>
+                        <th>申请人</th>
+                        <th>申请时间</th>
+                        <th>申请数据表</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-if="waitHandleApplicant.list&&waitHandleApplicant.list.length==0">
+                        <td  :colspan="4" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                    </tr>
+                    <tr v-for="item in waitHandleApplicant.list" v-else>
+                        <td>{{item.applyUserName}}</td>
+                        <td>{{item.applyTime}}</td>
+                        <td>{{item.tableName}}</td>
+                        <td>
+                            <button class="chorus-button admin-small" @click="manageShow(item.applyFormId)">处理</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div name="hasOper" id="hasOper" >
+            <div class="chorus-grid">
+                <table class="admin-table admin-striped">
+                    <thead>
+                    <tr>
+                        <th>申请人</th>
+                        <th>申请时间</th>
+                        <th>申请数据表</th>
+                        <th>处理结果</th>
+                        <!-- <th>处理人</th>-->
+                        <th>处理时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-if="hasHandleApplicant.list&&hasHandleApplicant.list.length==0">
+                        <td  :colspan="7" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                    </tr>
+                    <tr v-for="item in hasHandleApplicant.list" v-else>
+                        <td>{{item.applyUserName}}</td>
+                        <td>{{item.applyTime}}</td>
+                        <td>{{item.tableName}}</td>
+                        <td>{{item.statusCode}}</td>
+                        <!--  <td>{{item.dealUserName}}</td>-->
+                        <td>{{item.dealTime}}</td>
+                        <td>
+                            <button class="chorus-button admin-small" @click="hasCommitDetail(item.applyFormId)">详情</button>
+                        </td>
+                    </tr>
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+        <div name="hasCommit" id="hasCommit">
+            <div class="chorus-grid">
+                <table class="admin-table admin-striped">
+                    <thead>
+                    <tr>
+                        <th>申请人</th>
+                        <th>申请时间</th>
+                        <th>申请数据表</th>
+                        <th>处理结果</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-if="myHandleApplicant.list&&myHandleApplicant.list.length==0">
+                        <td  :colspan="5" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                    </tr>
+                    <tr v-for="item in myHandleApplicant.list" v-else>
+                        <td>{{item.applyUserName}}</td>
+                        <td>{{item.applyTime}}</td>
+                        <td>{{item.tableName}}</td>
+                        <td>{{item.statusCode}}</td>
+                        <td>
+                            <button class="chorus-button admin-small" @click="hasOperDetail(item.applyFormId)">详情</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </ad-tabs>
+    <ad-modal
+            title="权限申请处理"
+            :display="isShowManageDialog"
+            width="540px"
+            height="540px"
+            :buttons="[
+                {
+                    text: '通过',
+                    name: 'add',
+                    buttonClass:'admin-small',
+                    handler: approved
+                },
+                {
+                    text: '不通过',
+                    name: 'add',
+                    buttonClass:'admin-small',
+                    handler: reject
+                }
+                ,{
+                    text: '取消',
+                    name: 'cancel',
+                    buttonClass:'admin-small',
+                    handler: '() => {this.isShowManageDialog = false;}'
+                }]"
+            @admin-modal-off="() => {isShowManageDialog = false;}">
+        <div class="data-access-management" style="padding: 10px;">
+            <div style="padding: 10px;" >
+                <div style="padding: 0px;" >
+                    申请字段：
+                </div>
+
+                <table class="admin-table admin-striped showDialog">
+                    <thead>
+                    <tr>
+                        <th>字段名称</th>
+                        <th>字段说明</th>
+                        <th>安全等级</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    <tr  v-for="item in showManageData.list" >
+                        <td>{{item.columnName}}</td>
+                        <td>{{item.columnDesc}}</td>
+                        <td>{{item.securityLevel}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">申请理由：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            :disabled=true
+                            v-model="showManageData.reason"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">处理说明：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            v-model="showManageData.description"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+        </div>
+    </ad-modal>
+
+    <ad-modal
+            title="已提交申请"
+            :display="isShowHasOperDetailDialog"
+            width="540px"
+            height="540px"
+            :buttons="[
+                {
+                    text: '取消',
+                    name: 'cancel',
+                    buttonClass:'admin-small',
+                    handler: '() => {this.isShowHasOperDetailDialog = false;}'
+                }]"
+            @admin-modal-off="() => {isShowHasOperDetailDialog = false;}">
+        <div class="data-access-management" style="padding: 10px;">
+            <div style="padding: 10px;" >
+                <div style="padding: 0px;" >
+                    申请字段：
+                </div>
+
+                <table class="admin-table admin-striped showDialog">
+                    <thead>
+                    <tr>
+                        <th>字段名称</th>
+                        <th>字段说明</th>
+                        <th>安全等级</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    <tr v-if="showHasOperData.list" v-for="item in showHasOperData.list" >
+                        <td>{{item.columnName}}</td>
+                        <td>{{item.columnDesc}}</td>
+                        <td>{{item.securityLevel}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">申请理由：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            :disabled=true
+                            v-model="showHasOperData.reason"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">处理说明：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            disabled="disabled"
+                            v-model="showHasOperData.description"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+        </div>
+    </ad-modal>
+
+    <ad-modal
+            title="已处理申请"
+            :display="isShowHasCommitDetailDialog"
+            width="540px"
+            height="540px"
+            :buttons="[
+                {
+                    text: '取消',
+                    name: 'cancel',
+                    buttonClass:'admin-small',
+                    handler: '() => {this.isShowHasCommitDetailDialog = false;}'
+                }]"
+            @admin-modal-off="() => {isShowHasCommitDetailDialog = false;}">
+        <div class="data-access-management" style="padding: 10px;">
+            <div style="padding: 10px;" >
+                <div style="padding: 0px;" >
+                    申请字段：
+                </div>
+
+                <table class="admin-table admin-striped showDialog">
+                    <thead>
+                    <tr>
+                        <th>字段名称</th>
+                        <th>字段说明</th>
+                        <th>安全等级</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-if="showHasCommitData.list" v-for="item in showHasCommitData.list" >
+                        <td>{{item.columnName}}</td>
+                        <td>{{item.columnDesc}}</td>
+                        <td>{{item.securityLevel}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">申请理由：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            :disabled=true
+                            v-model="showHasCommitData.reason"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+            <div  style="padding: 10px;">
+                <div style="padding-bottom:10px;">处理说明：</div>
+                <div style="padding:0px;">
+                    <ad-input
+                            type="textarea"
+                            label=""
+                            disabled="disabled"
+                            v-model="showHasCommitData.description"
+                            placeholder="">
+                    </ad-input>
+                </div>
+            </div>
+
+        </div>
+    </ad-modal>
+</div>

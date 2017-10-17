@@ -1,0 +1,44 @@
+<div> 
+    <div  class="chorus-mark-loading" v-show="isShowMarkLoading">
+        <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+    </div>
+    <nav-bar :nav-list="navlist"></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            <button class="chorus-button admin-small" @click="changeOperationStatus()">{{operationStatusBtnText[operationStatusBtnVal]}}</button>
+        </div>
+        <div class="toolbar-r">
+
+        </div>
+    </div>
+    <div class="chorus-grid-wrapper chorus-grid">
+        <table class="admin-table admin-striped ">
+            <thead>
+                <tr>
+                    <th>任务名称</th>
+                    <th>所属项目</th>
+                    <th>任务负责人</th>
+                    <th>计划执行时间</th>
+                    <th>任务描述</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-if="data.length==0">
+                    <td :colspan="5" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                </tr>
+                <tr v-for="entry in data" v-else>
+                    <!--<td v-if="entry.status==true" v-for="(val, key) in columns"><input type="button"></td>-->
+                    <td :title="entry.projectName">{{entry.jobName}}</td>
+                    <td :title="entry.projectCode">{{entry.projectName }}</td>
+                    <td :title="entry.projectDesc">{{entry.createUserName}}</td>
+                    <td :title="entry.projectDesc">{{entry.scheExecTime }}</td>
+                    <td :title="entry.projectDesc">{{entry.description  }}</td>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="text-align: right;">
+        <ad-paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage" @toggle-page="togglePage($event)"></ad-paginator>
+    </div>
+</div>

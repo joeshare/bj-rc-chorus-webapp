@@ -1,0 +1,115 @@
+<div class="impromptu-query">
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div class="admin-grid-container">
+        <div  class="admin-grid-cell-3" style="float: left; display: inline-block; height: 100%; max-height: 750px;overflow: auto; padding-right:15px;">
+            <div style="display:inline-block; border-bottom: 2px solid #cecbce;  width: 100%;padding:10px 0px;min-width:250px;">
+
+                <ad-input style="width: 145px;"
+                          v-model="searchKey"
+                          placeholder="数据名称"
+                          :small="true"
+                          icon="ion-ios-search"></ad-input>
+                <input  class="chorus-button admin-small" type="button" value="搜索"  @click="seachTree()">
+            </div>
+            <div id="tree_3" class="tree-demo"></div>
+        </div>
+        <div  class="admin-grid-cell-9">
+            <div style="display:inline-block; border-bottom: 2px solid #cecbce;  width: 100%;padding:21px 10px 15px 10px;">SQL工作区
+
+            </div>
+
+            <div class="chorus-toolbar">
+                <div class="toolbar-l">
+                    <div class="chorus-form-field" style="height:28px; display: inline-block; padding-top: 8px;">
+                        <input class="chorus-button admin-small" type="button" :disabled="runing" @click="sqlrun()" value="运行" >
+                        <input class="chorus-button admin-small" type="button"  @click="dataformat()" value="格式化" >
+                        <input class="chorus-button admin-small" type="button"  @click="dataclear()" value="清空" >
+                    </div>
+                </div>
+            </div>
+            <div class="chorus-grid-wrapper">
+                <ad-input class="impromptu-query-input"
+                          type="textarea"
+                          v-model="sqltextarea"
+                          id="sqlworkarea"
+                          :small="true"
+                          placeholder=""
+                ></ad-input>
+            </div>
+
+            <div class="chorus-grid-wrapper" style="margin-top: 20px;margin-bottom: 15px;">
+                <ad-tabs :tabs="tabs" :current-tab-name="activeTabval" @toggle-tab="toggleTab"   style="height:450px">
+                    <div name="exeResouce" class="admin-tabs-content" >
+                        <div v-show="!onerrors" class="chorus-grid">
+                            <table class="admin-table  admin-striped">
+                                <thead>
+                                <tr  v-if="data.list && data.list.length && data.list.length!=0">
+                                    <th v-for="(value,key) in data.list[0]" style="text-align: left !important;">{{key}}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-if="!data.list || !data.list.length ||data.list.length==0">
+                                    <td  :colspan="9" style="height: 30px;line-height: 30px;text-align: center">{{searchmessage}}</td>
+                                </tr>
+                                <tr v-for="entry in data.list" v-else >
+                                    <td v-for="clum in entry">
+                                        {{clum}}
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                       <!-- <div v-show="!onerrors"  style="text-align: right;">
+                            <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"  @toggle-page="togglePage"></paginator>
+                        </div>-->
+                        <div v-show="onerrors"  style="text-align: center;color:red; border-bottom: 1px solid #ebedf2; padding-top: 40px; height: 100px;">{{errorText}}</div>
+                    </div>
+                    <div name="exeHistory" class="admin-tabs-content">
+                        <div class="chorus-grid">
+                            <table class="admin-table  admin-striped">
+                                <thead>
+                                <tr>
+                                    <th style="width: 18%;">执行时间</th>
+                                    <th style="width: 18%;">执行人</th>
+                                    <th>执行SQL</th>
+                                    <th style="width:10%;">执行结果</th>
+                                    <th style="width: 15%;text-align: left !important;">SQL运行时间(秒)</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-if="!datahsy.list||datahsy.list.length==0">
+                                    <td  :colspan="5" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+                                </tr>
+                                <tr v-for="entry in datahsy.list" v-else >
+                                    <td >{{entry.createTime}}</td>
+                                    <td>{{entry.createUser}}</td>
+                                    <td style="overflow: hidden;"><a style="color:#0e9ee2;cursor:pointer; " @click="addsqlhistory(entry.executeSql)">{{entry.executeSql}}</a></td>
+                                    <td v-if="entry.executeStatus=='执行失败'" style="color:#fec500;">{{entry.executeStatus}}</td>
+                                    <td v-if="entry.executeStatus=='执行成功'" style="color:#4fca72;">{{entry.executeStatus}}</td>
+                                    <td v-if="entry.executeStatus=='执行中'" >{{entry.executeStatus}}</td>
+                                    <td>{{entry.executeTime/1000}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div  style="text-align: right;">
+                            <paginator :total-count="totalCounthsy" :page-size="pageSizehsy" :current-page="currentPagehsy"  @toggle-page="togglePagehsy"></paginator>
+                        </div>
+                    </div>
+                </ad-tabs>
+
+            </div>
+        </div>
+    </div>
+    <!-- 确认 modal-->
+    <ad-modal
+            height="190px"
+            width="380px"
+            title="提示"
+            :display="alertDisplay"
+            :buttons="alertModalBtns"
+            @admin-modal-off="() => { alertDisplay = false }"
+            @admin-modal-on="alertModalOn">
+        <div>将此SQL语句，应用到当前SQL窗口，请选择</div>
+    </ad-modal>
+</div>

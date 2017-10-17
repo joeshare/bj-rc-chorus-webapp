@@ -1,0 +1,85 @@
+<div>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+            <div class="chorus-form-field meta-data-page-form-field" style="position: relative;" >
+                <ad-input style="width: 210px;"
+                          v-model="searchKey"
+                          placeholder="表名、项目名"
+                          :small="true"
+                          icon="ion-ios-search"></ad-input>
+                <input style="position: absolute;top: 6px;left: 215px;" class="chorus-button admin-small" type="button" value="搜索"  @click="fetchData(1)">
+            </div>
+        </div>
+        <div class="toolbar-r">
+        </div>
+    </div>
+    <div class="chorus-grid-wrapper chorus-grid meta-data-management-grid">
+        <table class="admin-table  admin-striped">
+            <thead>
+            <tr>
+                <th>表名称</th>
+                <th>表描述</th>
+                <th>安全等级</th>
+                <th>所属项目</th>
+                <th style="min-width: 140px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="data.length==0">
+                <td  :colspan="7" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+            </tr>
+            <tr v-for="entry in data" v-else >
+                <td >{{entry.tableName}}</td>
+                <td>{{entry.tableDes}}</td>
+                <td>{{entry.securityLevel}}</td>
+                <td>{{entry.projectName}}</td>
+                <td class="project-management-opt" style="text-align: center">
+                    <input class="chorus-button admin-small"  type="button" value="详情" @click="detailsBtnClick(entry)">
+                    <input class="chorus-button admin-small"  type="button" value="申请权限" @click="authBtnClick(entry)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div  style="text-align: right;">
+        <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"  @toggle-page="togglePage"></paginator>
+    </div>
+    <!-- 表详情 modal-->
+    <ad-modal
+            height="580px"
+            width="800px"
+            title="表详情"
+            :display="detailsDisplay"
+            :buttons="detailsModalBtns"
+            @admin-modal-off="() => {detailsDisplay = false;isHiddenLoading=false; }"
+            >
+        <ad-tabs :tabs="tabs" :current-tab-name="activeTabId" style="height:400px">
+            <div name="baseInfo" class="admin-tabs-content" >
+                <base-info :table-id="currentRecoder.tableInfoId"></base-info>
+            </div>
+            <div name="fieldInfo" class="admin-tabs-content" >
+                <demo-data :table-id="currentRecoder.tableInfoId"></demo-data>
+            </div>
+            <div name="exampleData" class="admin-tabs-content">
+                <field-info :table-id="currentRecoder.tableInfoId"></field-info>
+            </div>
+            <div name="blood" class="admin-tabs-content">
+                <ad-spinner type="circle" color="#0e9ee2" v-show="!isHiddenLoading" style="position: absolute;width: 30px;height: 30px;"></ad-spinner>
+                <div style="display: none;color: #6f7073;font-size: 14px; text-align: center;    padding-top: 24px;
+    padding-left: 18px;" id="nodatas">暂无数据</div>
+                <canvas id="meta-data-canvas" width="716px" height="368px">请使用chrome或firefox最新版本浏览器</canvas>
+
+            </div>
+        </ad-tabs>
+    </ad-modal>
+    <!-- 申请授权 modal-->
+    <ad-modal
+            height="520px"
+            width="700px"
+            title="申请授权"
+            :display="authDisplay"
+            :buttons="authModalBtns"
+            @admin-modal-off="() => {authDisplay = false }">
+        <power-apply  :table-id="currentRecoder.tableInfoId" ref="powerapp"></power-apply>
+    </ad-modal>
+</div>

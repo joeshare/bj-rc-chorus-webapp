@@ -1,0 +1,81 @@
+<div>
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l">
+          <!--  <div class="chorus-form-field" style="height:28px;padding-top: 10px;float: left;">
+                <div style="float:left; display:inline-block; line-height:28px; margin-right:8px;">项目</div>
+                <ad-select
+                        v-model="projectValue"
+                        :options="projects"
+                        :small="true"
+                        label="">
+                </ad-select>
+            </div>-->
+            <div class="chorus-form-field" style="height:28px;line-height:28px;padding-top: 10px;float: left;margin-left: 15px;">
+                <div style="float:left; display:inline-block; line-height:28px; margin-right:8px;">数据</div>
+                <ad-sug-input class=""
+                          v-model="sugInputText"
+                          :associations="associations"
+                          :small="true"
+                          placeholder=""
+                          @toggle-select="sugSelectClick"
+                          @input="sugChangeInput"
+                        ></ad-sug-input>
+            </div>
+        </div>
+        <div class="toolbar-r">
+        </div>
+    </div>
+    <div id="data-chart-filter-panel" :style="{display:filters.length>0?'':'none'}" class="data-chart-filter admin-grid-container" ref="filterPanel" >
+        <div class="admin-grid-cell-4" v-for="entry in filters">
+                <div class="" style="padding: 15px 10px;">
+                    <ad-input class="filter-field"
+                              :label="entry.propertyName"
+                              v-model="entry.propertyValue"
+                              :small="true"
+                              placeholder=""
+                            ></ad-input>
+                </div>
+
+        </div>
+        <div class="data-chart-filter-more" :style="{display:filters.length>6?'block':'none',position: 'absolute',bottom:'0',left: '50%',marginLeft:' -10px'}">
+            <i class="ion-chevron-down"  @click="filterPanelMoreOpen" ref="moreOpen" id="data-chart-more-open"></i>
+            <i class="ion-chevron-up" style="display: none;" @click="filterPanelMoreClose" ref="moreClose" id="data-chart-more-close"></i>
+        </div>
+    </div>
+    <div :style="{display:filters.length>0?'none':'block',textAlign:'center',padding:'10px',marginTop: '30px',marginBottom: '30px',marginLeft: '20px',marginRight: '20px'}" >
+        暂无属性
+    </div>
+    <div class="chorus-toolbar" :style="{display:filters.length>0?'block':'none'}">
+        <div class="toolbar-r">
+            <input class="chorus-button admin-small" type="button" value="查询"  @click="fetchPointData">
+        </div>
+    </div>
+    <div class="chorus-split-line">
+
+    </div>
+
+    <div v-show="showloading" style="padding-left: 50%;padding-top: 100px;" > <ad-spinner style="height:15px; width: 15px;" type="debounce" color="#f63"></ad-spinner>loading。。。</div>
+
+
+    <div :style="{display:propertyList.length>0?'block':'none',padding: '0 20px',overflowX: 'auto', whiteSpace: 'nowrap'}" ref="canParent">
+
+        <div style="display: inline-block;">
+        <canvas id="data-chart-canvas" height="700" ref="canvas"></canvas>
+        </div>
+        <div id="data-chart-canvas-property" :style="{display:propertyList.length>0?'inline-block':'none',height:'700px',width: '186px',margin: '5px 0 5px 5px',boxShadow: '0px 0 6px #ccc',overflowY:'auto'}" class="admin-grid-container" style="" >
+            <div class="admin-grid-cell-12" v-for="entry in propertyList">
+                <div style="padding: 15px 10px">
+                    <ad-input style="width: auto" class="data-chart-propertyList-field"
+                              :label="entry._label"
+                              v-model="entry._value"
+                              :small="true"
+                              :disabled="true"
+                              placeholder=""
+                            ></ad-input>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

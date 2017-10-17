@@ -1,0 +1,46 @@
+<div class="chorus-data-table-management">
+    <nav-bar :nav-list="navlist" style="margin-bottom: 10px;"></nav-bar>
+    <div class="chorus-toolbar">
+
+        <button class="create-data-table-button admin-small" :disabled="showCreateFormBtnDisabled" @click="showCreateForm">新建数据表</button>
+    </div>
+    <div class="table-container">
+        <table class="admin-table admin-striped data-table-list">
+            <thead>
+            <tr>
+                <th>表名称</th>
+                <th>表描述</th>
+                <th>表类型</th>
+                <th>是否支持快照</th>
+                <th>数据时效性</th>
+                <th>SLA</th>
+                <th>安全等级</th>
+                <th>是否对外开放</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="datalist.list&&datalist.list.length==0">
+                <td  :colspan="10" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+            </tr>
+            <tr v-for="entry in datalist.list" v-else >
+                <td  style="max-width: 300px; overflow: hidden;">{{entry.tableName}}</td>
+                <td style="max-width: 300px; overflow: hidden;">{{entry.tableDes}}</td>
+                <td>{{entry.tableType}}</td>
+                <td>{{entry.isSnapshot==1?'是':'否'}}</td>
+                <td>{{entry.updateFrequence}}</td>
+                <td>{{entry.sla}}</td>
+                <td>{{entry.securityLevel}}</td>
+                <td>{{entry.isOpen==1?'是':'否'}}</td>
+                <td><button class="admin-small" @click="showDataTableDetail(entry)">详情</button>
+                    <button class="admin-small" @click="showDataTableUpdate(entry)">修改</button>
+                    <button class="admin-small" @click="showDataTableDelete(entry)">删除</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div  style="text-align: right;">
+        <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"  @toggle-page="togglePage"></paginator>
+    </div>
+</div>

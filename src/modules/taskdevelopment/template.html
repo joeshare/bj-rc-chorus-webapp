@@ -1,0 +1,72 @@
+<div class="task-development">
+    <nav-bar :nav-list="navlist"></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l" style=" clear: both;">
+            <div class="chorus-form-field" style="height:28px;display: inline-block; clear: both;">
+                <ad-input style="width: 220px;line-height:28px;"
+                          v-model="jobAliasName"
+                          placeholder="任务名称"
+                          :small="true"
+                          icon="ion-ios-search"
+                          @keyupenter="onsearchClick($event)"
+                        ></ad-input>
+                <input  class="chorus-button admin-small" type="button" value="搜索"  @click="onsearchClick()">
+            </div>
+        </div>
+        <div class="toolbar-r">
+            <input class="chorus-button admin-small" type="button"  @click='createWorkflowBtnClick(2)' value="创建批量任务" >
+            <input class="chorus-button admin-small" type="button"  @click='createWorkflowBtnClick(1)' value="创建流式任务" >
+        </div>
+    </div>
+    <div class="chorus-grid-wrapper chorus-grid meta-data-management-grid">
+        <table class="admin-table  admin-striped">
+            <thead>
+            <tr>
+                <th>任务名称</th>
+                <th>任务类型</th>
+                <th>任务描述</th>
+                <th>任务状态</th>
+                <th>任务负责人</th>
+                <th>任务创建人</th>
+                <th>任务创建时间</th>
+                <th style="min-width: 300px">操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-if="!data||data.length==0">
+                <td  :colspan="8" style="height: 30px;line-height: 30px;text-align: center">暂无数据</td>
+            </tr>
+            <tr v-for="entry in data" v-else >
+                <td >{{entry.jobAliasName}}</td>
+                <td>{{entry.jobTypeText}}</td>
+                <td>{{entry.description}}</td>
+                <td>{{entry.statusText}}</td>
+                <td>{{entry.deployUserName}}</td>
+                <td>{{entry.createUserName}}</td>
+                <td>{{entry.createTime}}</td>
+                <td class="project-management-opt" style="text-align: center">
+                    <input class="chorus-button admin-small"  type="button" value="详情" @click="editWorkflowBatchBtnClick(entry)">
+                    <input class="chorus-button admin-small" :disabled='entry.status!=="UNDEPLOY"||deployBtnDisabled' type="button" value="上线" @click="deployBtnClick(entry)">
+                    <input class="chorus-button admin-small" :disabled='entry.status!="DEPLOY"||unDeployBtnDisabled' type="button" value="下线" @click="undeployBtnClick(entry)">
+                    <input class="chorus-button admin-small" :disabled='entry.jobType==1||entry.status=="UNDEPLOY"||excuteBtnDisabled' type="button" value="执行" @click="excuteBtnClick(entry)">
+                    <input class="chorus-button admin-small" :disabled='entry.status!="UNDEPLOY"||entry.status!="UNDEPLOY"||deleteBtnDisabled'  type="button" value="删除" @click="delProjectBtnClick(entry)">
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div  style="text-align: right;">
+        <paginator :total-count="totalCount" :page-size="pageSize" :current-page="currentPage"  @toggle-page="togglePage"></paginator>
+    </div>
+    <ad-modal
+            height="400px"
+            width="480px"
+            title="执行参数"
+            :display="mapsModalDisplay"
+            :buttons="mapsModalButtons"
+            @admin-modal-off="() => {mapsModalDisplay = false; }"
+            @admin-modal-cancel="() => {mapsModalDisplay = false;}"
+            >
+        <Maps @maps-toggle="mapsToggle" :job-id="currentJobId"></Maps>
+    </ad-modal>
+</div>

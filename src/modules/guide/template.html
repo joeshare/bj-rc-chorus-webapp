@@ -1,0 +1,158 @@
+<div class="chorus-guide">
+    <div class="title">欢迎使用Chorus平台，在这里你可以：</div>
+    <div class="content admin-grid-container">
+        <div class="admin-grid-cell-3">
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="ion-cube"></i>创建新项目
+                </div>
+                <div class="panel-desc">
+                    为团队或个人创建专属的数据项目,在项目中完成数据接入、开发、管理、分析等工作，提升数据价值，解决业务问题。
+                </div>
+                <div class="panel-toolbar">
+                    <button class="admin-small" @click="createBtnClick">创建</button>
+                </div>
+                <div style="margin-top: 30px;"><img :src="images[3]" style="max-width:90%;"></div>
+            </div>
+        </div>
+        <div class="admin-grid-cell-3">
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="ion-android-settings"></i>在项目中工作
+                </div>
+                <div class="panel-desc">
+                    进入个人归属的任一项目中，根据个人在该项目中的工作角色完成项目配置、数据开发、数据管理、数据分析等工作。
+                </div>
+                <div class="panel-toolbar">
+                    <ad-sug-input style="margin-right: 20px;width: 120px;"
+                                  v-model="projectobj"
+                                  :associations="projectSelectOptions"
+                                  :small="true"
+                                  placeholder=""
+                                  @click="sugclick"
+                                  @toggle-select="sugSelectClick"
+                                  @input="sugChangeInput"
+                                  @change="sugInputChangeEvent"
+                            ></ad-sug-input><button class="admin-small" @click="page2entry" :disabled="btnDisabled">进入</button>
+                </div>
+                <div style="margin-top: 30px;"><img :src="images[2]" style="max-width:90%;"></div>
+
+            </div>
+        </div>
+        <div class="admin-grid-cell-3">
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="ion-android-search"></i>了解平台中的数据
+                </div>
+                <div class="panel-desc">
+                    查看平台内各个项目对外开放的数据，了解数据结构，判断其是否能够解决业务问题，如需要可以申请数据的使用权限。
+                </div>
+                <div class="panel-toolbar">
+                    <button class="admin-small"  @click="page2know" :disabled="btnDisabled">了解</button>
+                </div>
+                <div style="margin-top: 30px;"><img :src="images[0]" style="max-width:90%;"></div>
+            </div>
+        </div>
+        <div class="admin-grid-cell-3">
+            <div class="panel">
+                 <div class="panel-title">
+                     <i class="ion-calendar"></i>查询已授权的数据
+                 </div>
+                 <div class="panel-desc">
+                     查询已授权数据的详细内容，根据自身需求编写灵活的SQL，获取相关数据的示例详细情况，并最终解决实际业务问题。
+                 </div>
+                 <div class="panel-toolbar">
+                     <button class="admin-small" @click="page2search" :disabled="btnDisabled">查询</button>
+                 </div>
+                <div style="margin-top: 30px;"><img :src="images[1]" style="max-width:90%;"></div>
+            </div>
+        </div>
+    </div>
+    <ad-modal
+            height="612px"
+            width="500px"
+            :title="modalTitle"
+            :display="createModalDisplay"
+            :buttons="createModalButtons"
+            @admin-modal-off="() => {hideCreateModalHandler(); }"
+            @admin-modal-cancel="() => {hideCreateModalHandler(); }"
+            >
+        <div class="admin-grid-container">
+            <div class="admin-grid-cell-12 create-modal-title" style="">
+                基本信息
+            </div>
+            <div class="admin-grid-cell-6" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="项目名称："
+                          v-model="projectName"
+                          placeholder=""
+                          :warnings="projectNameWarnings"
+                          @input='inputProjectName'
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-6" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="项目编码："
+                          v-model="projectCode"
+                          placeholder=""
+                          :warnings="projectCodeWarnings"
+                          @input='inputProjectCode'
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-12" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="项目描述："
+                          type="textarea"
+                          placeholder=""
+                          v-model="projectDesc"
+                          @input='inputProjectDesc'
+                          :warnings="projectDescWarnings"
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-12 create-modal-title" >
+                资源申请
+            </div>
+            <div class="admin-grid-cell-4" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="CPU (单位：个)"
+                          v-model="cpu"
+                          placeholder=""
+                          :warnings="applyWarningsMap['cpu']"
+                          @input="validateNotEmptyApply(cpu, 'cpu')"
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-4" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="内存 (单位：G)"
+                          v-model="memory"
+                          placeholder=""
+                          :warnings="applyWarningsMap['memory']"
+                          @input="validateNotEmptyApply(memory, 'memory')"
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-4" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          label="存储 (单位：G)"
+                          v-model="storage"
+                          placeholder=""
+                          :warnings="applyWarningsMap['storage']"
+                          @input="validateNotEmptyApply(storage, 'storage')"
+                        ></ad-input>
+            </div>
+            <div class="admin-grid-cell-12" style="padding: 10px;">
+                <ad-input class="project-manage-ad-input"
+                          type="textarea"
+                          label="申请用途"
+                          v-model="reason"
+                          placeholder=""
+                          :warnings="applyWarningsMap['reason']"
+                          @input="txtAreaVali(reason, 'reason')"
+                        ></ad-input>
+            </div>
+            <div style="font-size:12px;color:#666;" v-show="createModalButtons.length==1">
+                 数据提交中,请耐心等待...
+            </div>
+        </div>
+
+    </ad-modal>
+</div>

@@ -1,0 +1,267 @@
+<div class="workflow-edit-wrapper" id="workflow-edit-wrapper">
+    <div  class="chorus-mark-loading" v-show="isShowMarkLoading">
+        <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+    </div>
+    <div class="chorus-toolbar">
+        <div class="toolbar-l" style=" clear: both;">
+            <div class="chorus-form-field" style="font-size:13px;">
+                当前状态：{{workflowStatusText}}
+            </div>
+        </div>
+        <div class="toolbar-r">
+            <input class="chorus-button admin-small" type="button" :disabled='workflowStatus=="DEPLOY"||saveBtnDisabled'  @click='saveBtnClick()' value="保存" >
+            <input class="chorus-button admin-small " :disabled='workflowStatus=="DEPLOY"||deployBtnDisabled' type="button"  @click='deployBtnClick()' value="上线" >
+            <input class="chorus-button admin-small " :disabled='workflowStatus=="UNDEPLOY"||unDeployBtnDisabled' type="button"  @click='undeployBtnClick' value="下线" >
+            <input :class="['chorus-button admin-small',workflowType==1 ? 'workflow-hidden' : '' ]" :disabled='!jobId||workflowStatus!=="DEPLOY"||excuteBtnDisabled' type="button"  @click='excuteBtnClick(jobId)' value="执行" >
+            <input class="chorus-button admin-small" type="button"  @click='pageBackBtnClick()' value="返回" >
+        </div>
+    </div>
+    <div style="border-bottom: 1px solid rgb(239, 239, 239);margin-bottom: 15px;"></div>
+    <div class="workflow-edit-containter" style="flex: 1">
+        <!-- module menu-->
+         <div class="workflow-edit-task-l-panel" style="display:flex;flex-flow:column;margin-right: 10px;padding: 15px 8px" :style="workflowEditTaskLeftanelPanlStyle">
+             <div class="panel-wrap">
+                <admin-input style="width: 133px"
+                     v-model="compontentSearchValue"
+                     icon-class="ion-ios-search"
+                     @input="compontentSearch"
+                     placeholder="请输组件名称"></admin-input>
+             </div>
+             <div v-bind:class="['panel-wrap', workflowType==2 ? 'workflow-hidden' : '']" style="flex:1;position: relative;">
+                 <div class="panel-title"><!--<i :class="['ion-clipboard','workflow-icon']"></i>--><span  class="text">输入类</span><i v-bind:class="['workflow-edit-property-variable-icon',modulesInputTypeContentVisible ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" style="float:right;margin-right: 15px;" @click="showModulesContent('modulesInputTypeContentVisible',$event)"></i></div>
+                 <div class="workflow-panel-content-wrap">
+                     <div class="panel-container" v-if="modulesInputTypeArr.length==0">
+                         <div class="noData">暂无数据</div>
+                     </div>
+                     <div class="workflow-panel-container"  v-else>
+                         <div v-for="entry in modulesInputTypeArr">
+                             <div :class="['workflow-edit-module-node', dragable?'dom-dragable':'']" :title="entry.moduleName" @mousedown="beforeDrag(entry)">
+                                 <span class="title"> {{entry.moduleAliasName}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <div v-bind:class="['panel-wrap', workflowType==1 ? 'workflow-hidden' : '']" style="position: relative;height:105px;">
+                 <div class="panel-title"><!-- <i :class="['ion-network','workflow-icon']"></i>--><span  class="text">流程类</span><i v-bind:class="['workflow-edit-property-variable-icon',modulesFlowTypeContentVisible ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" style="float:right;margin-right: 15px;" @click="showModulesContent('modulesFlowTypeContentVisible',$event)"></i></div>
+                 <div class="workflow-panel-content-wrap">
+                     <div class="panel-container" v-if="modulesFlowTypeArr.length==0">
+                         <div class="noData">暂无数据</div>
+                     </div>
+                     <div class="panel-container"  v-else>
+                         <div  v-for="entry in modulesFlowTypeArr" >
+                             <div :class="['workflow-edit-module-node', dragable?'dom-dragable':'']" :title="entry.moduleName" @mousedown="beforeDrag(entry)">
+                                 <span class="title">{{entry.moduleAliasName}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <div class="panel-wrap" style="flex:1;position: relative;">
+                 <div class="panel-title"><!--<i :class="['ion-ios-gear-outline','workflow-icon']"></i>--><span  class="text">处理类</span><i v-bind:class="['workflow-edit-property-variable-icon',modulesBatchDealTypeContentVisible ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" style="float:right;margin-right: 15px;" @click="showModulesContent('modulesBatchDealTypeContentVisible',$event)"></i></div>
+                 <!--2是批处理（定期）-->
+                 <div v-bind:class="[ 'workflow-panel-content-wrap',workflowType==2 ? '' : 'workflow-hidden']" style="">
+                     <div class="panel-container" v-if="modulesBatchDealTypeArr.length==0">
+                         <div class="noData">暂无数据</div>
+                     </div>
+                     <div class="workflow-panel-container" v-else>
+                         <div  v-for="entry in modulesBatchDealTypeArr" >
+                             <div :class="['workflow-edit-module-node', dragable?'dom-dragable':'']"  :title="entry.moduleName" @mousedown="beforeDrag(entry)">
+                                 <span class="title"> {{entry.moduleAliasName}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 <!--1是流式(实时)-->
+                 <div v-bind:class="['workflow-panel-content-wrap',workflowType==1 ? '' : 'workflow-hidden']">
+                     <div class="panel-container" v-if="modulesDealTypeArr.length==0">
+                         <div class="noData">暂无数据</div>
+                     </div>
+                     <div class="panel-container"  v-else>
+                         <div  v-for="entry in modulesDealTypeArr">
+                             <div :class="['workflow-edit-module-node', dragable?'dom-dragable':'']"  :title="entry.moduleName" @mousedown="beforeDrag(entry)">
+                                 <span class="title"> {{entry.moduleAliasName}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <div v-bind:class="['panel-wrap', workflowType==2 ? 'workflow-hidden' : '']" style="flex:1;position: relative;">
+                 <div class="panel-title"><!--<i :class="['ion-ios-albums-outline','workflow-icon']"></i>--><span class="text">输出类</span><i v-bind:class="['workflow-edit-property-variable-icon',modulesOutputTypeContentVisible ? 'ion-ios-arrow-up':'ion-ios-arrow-down'  ]" style="float:right;margin-right: 15px;" @click="showModulesContent('modulesOutputTypeContentVisible',$event)"></i></div>
+                 <div class="workflow-panel-content-wrap">
+                     <div class="panel-container" v-if="modulesOutputTypeArr.length==0">
+                         <div class="noData">暂无数据</div>
+                     </div>
+                     <div class="workflow-panel-container"  v-else>
+                         <div  v-for="entry in modulesOutputTypeArr">
+                             <div :class="['workflow-edit-module-node', dragable?'dom-dragable':'']" :title="entry.moduleName" @mousedown="beforeDrag(entry)">
+                                 <span class="title">{{entry.moduleAliasName}}</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+
+         </div>
+        <div class="workflow-edit-task-r-panel">
+        <!-- <ad-spinner type="circle" color="#0e9ee2"></ad-spinner>-->
+             <div class="workflow-edit-task-can-wrap" >
+                 <div style="display:inline-block;overflow-y: auto;" :style="workflowEditTaskCanvasTabsPanelStyle">
+                     <canvas  ref="canvas" id="workflow-edit-task-canvas" :class="[isCanvasActive?'workflow-canvas-active':'']" :width="canvasWith" height="canvasHeight" style="border-top:1px solid rgb(239, 239, 239) ;border-left:1px solid rgb(239, 239, 239);border-right:1px solid rgb(239, 239, 239)"></canvas>
+                 </div>
+                 <div style="display: inline-block;vertical-align: top;" :style="workflowEditTaskCanvasTabsPanelStyle">
+                     <div class="workflow-edit-task-property-panel" style="height:100%">
+                         <ad-tabs  :tabs="tabs"  @toggle-tab="toggleTab"  :current-tab-name="activeTabId"  @before-change-spread="changeTabsSpread">
+                             <div style="padding:10px 0 0 0;" name="baseInfo" class="chorus-tabs-content" >
+                                 <div style="padding: 10px;">
+                                     <admin-input class="" style="width:100%"
+                                                  label="任务名称  (必填项)"
+                                                  v-model="jobAliasName"
+                                                  placeholder=""
+                                                  :warnings="jobAliasNameWarnings"
+                                                  :disabled="!compontentEditAble"
+                                                  @input='inputJobAliasName'
+                                             ></admin-input>
+                                 </div>
+                                 <div style="padding: 10px;" >
+                                     <admin-input class=""  style="width:100%"
+                                                  label="任务描述"
+                                                  type="textarea"
+                                                  placeholder=""
+                                                  v-model="jobDescription"
+                                                  :warnings="jobDescriptionWarnings"
+                                                  @input="inputJobDescription"
+                                                  :disabled="!compontentEditAble"
+                                             ></admin-input>
+                                 </div>
+                             </div>
+                             <div name="componentInfo"  class="chorus-tabs-content">
+                                 <module-property
+                                         :property-data="modulePropertyData"
+                                         :editable="compontentEditAble"
+                                         @modify-property-data="modifyModulePropertyData"
+                                         @add-multipairtable-map="addModulePropertyMultiPairTableMap"
+                                         @remove-multipairtable-map="removeModulePropertyMultiPairTableMap"
+                                         @add-multipair-map="addModulePropertyMultiPairInputTextMap"
+                                         @remove-multipair-map="removeModulePropertyMultiPairInputTextMap"
+                                         @modify-params-data="modifyParamsData"
+                                         :workflow-type="workflowType"
+                                         >
+                                 </module-property>
+                             </div>
+                             <div name="deployInfo"  class="chorus-tabs-content">
+                                 <div class="workflow-edit-task-deploy-panel-title">
+                                     <div class="group-line-short"></div>
+                                     <div class="group-line-text">部署信息</div>
+                                     <div class="group-line-long"></div>
+                                 </div>
+                                 <div  class="workflow-edit-task-deploy-panel-container">
+                                     <ad-select class="field"
+                                                v-model="instanceId"
+                                                label="执行容器"
+                                                :options="instanceOptions"
+                                                :warnings="instanceWarnings"
+                                                :disabled="!compontentEditAble"
+                                                :small="true"></ad-select>
+                                 </div>
+                                 <div :class="['workflow-edit-task-deploy-panel-title',workflowType==1?'workflow-hidden':'']" >
+                                        <div class="group-line-short"></div>
+                                        <div class="group-line-text">调度规则</div>
+                                        <div class="group-line-long"></div> 
+                                 </div>
+                                 <div :class="['workflow-edit-task-deploy-panel-container',workflowType==1?'workflow-hidden':'']">
+                                     <ad-select  class="field"
+                                                 v-model="schedule.scheduleType"
+                                                 label="调度方式"
+                                                 :options="schedule.scheduleTypeOptions"
+                                                 :disabled="!compontentEditAble"
+                                                 @input="changeScheduleTypeOptions"
+                                                 :small="true"></ad-select></br>
+                                     <!--0 */15 * * * ?-->
+                                     <admin-input class="field"
+                                                  label="定期调度时间表达式"
+                                                  v-model="schedule.cronExpression"
+                                                  :small="true"
+                                                  @input="inputCronExpression"
+                                                  :warnings="cronExpressionWarnings"
+                                                  :disabled="schedule.scheduleType==1||!compontentEditAble"
+                                                  placeholder=""></admin-input>
+
+                                 </div>
+                                 <div class="workflow-edit-task-deploy-panel-title">
+                                        <div class="group-line-short"></div>
+                                        <div class="group-line-text">告警规则</div>
+                                        <div class="group-line-long"></div> 
+                                 </div>
+                                 <div class="workflow-edit-task-deploy-panel-container">
+                                     <!-- 默认选中
+                                     <div style="font-size: 12px;">
+                                         <admin-checkbox
+                                                 text="任务执行出现异常"
+                                                 v-model="excuteErrorFlgCheckBox"
+                                                 :small="true"
+                                                 :disabled="!compontentEditAble"
+                                                 ></admin-checkbox>
+                                     </div>
+                                     -->
+                                     <div style="font-size: 12px;">
+                                         <!-- 默认选中
+                                        <admin-checkbox
+                                                text="任务执行时间超过"
+                                                v-model="timeOutFlgCheckBox"
+                                                :small="true"
+                                                :disabled="!compontentEditAble"
+                                                ></admin-checkbox>-->
+                                         <span>任务执行时间超过&nbsp;&nbsp;</span><admin-input :class="[timeOutIntervalWarnings?'admin-form-warning ':'']" style="width:80px"
+                                                                                       v-model="warningConfig.timeOutInterval"
+                                                                                       placeholder=""
+                                                                                       :small="true"
+                                             ></admin-input><span>&nbsp;&nbsp;分钟</span>
+                                     </div>
+                                     <div v-show="timeOutIntervalWarnings" style="color: #f35555;font-size: 12px;padding-top:4px;">
+                                         {{timeOutIntervalWarnings}}
+                                     </div>
+                                 </div>
+                             </div>
+                             <div   style="padding:10px 0 0 10px;"  name="blood"  v-if='workflowType==2'  class='chorus-tabs-content'>
+                                 <div style="width: 261px;" class="admin-grid-container">
+                                     <div class="admin-grid-cell-6" style="margin-bottom: 8px;font-size: 12px; color: #88898c;">输入表</div>
+                                     <div class="admin-grid-cell-6"  style="margin-bottom: 8px;font-size: 12px; color: #88898c;">输出表</div>
+                                     <div class="admin-grid-cell-6"> <ad-select style="width: 120px;"
+                                                                                class="field"
+                                                                                v-model="dataInput"
+                                                                                :options="tabSelectData"
+                                                                                :warnings="dataInputWarnings"
+                                                                                :disabled="!compontentEditAble"
+                                                                                @input="changeTabSelect"
+                                                                                :small="true"></ad-select></div>
+                                     <div class="admin-grid-cell-6"> <ad-select style="width: 120px;"
+                                                                                 class="field"
+                                                                                v-model="dataOutput"
+                                                                                :options="tabSelectData"
+                                                                                :warnings="dataOutputWarnings"
+                                                                                :disabled="!compontentEditAble"
+                                                                                @input="changeTabSelect"
+                                                                                :small="true"></ad-select></div>
+                                 </div>
+
+                             </div>
+                         </ad-tabs>
+                     </div>
+                 </div>
+             </div>
+
+    </div>
+   </div>
+   <ad-modal
+           height="400px"
+           width="480px"
+           title="执行参数"
+           :display="mapsModalDisplay"
+           :buttons="mapsModalButtons"
+           @admin-modal-off="() => {mapsModalDisplay = false; }"
+           @admin-modal-cancel="() => {mapsModalDisplay = false;}"
+           >
+       <Maps @maps-toggle="mapsToggle" :job-id="currentjobId"></Maps>
+   </ad-modal>
+</div>

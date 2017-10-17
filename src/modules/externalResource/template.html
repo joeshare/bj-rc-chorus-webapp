@@ -1,0 +1,415 @@
+<div class="external-resource">
+    <nav-bar :nav-list="navlist" ></nav-bar>
+    <div class="chorus-toolbar">
+        <div class="toolbar-r">
+            <button class="chorus-button admin-small" @click="showCreateDialog">增加数据源</button>
+        </div>
+    </div>
+    <div class="chorus-grid chorus-grid-wrapper">
+        <table class="admin-table admin-striped">
+            <thead>
+            <tr>
+                <th>数据源名称</th>
+                <th>数据源类型</th>
+                <th>数据源描述</th>
+                <th>创建人</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="item in dataList">
+                <td>{{item.resourceName}}</td>
+                <td>{{item.storageType =="1"?"mysql":"ftp"}}</td>
+                <td>{{item.resourceDesc}}</td>
+                <td>{{item.createUserName}}</td>
+                <td>{{item.createTime}}</td>
+                <td>
+                    <button class="chorus-button admin-small" @click="update(item.resourceOutId)">修改</button>
+                    <button class="chorus-button admin-small" @click="del(item.resourceOutId)">删除</button>
+                    <button class="chorus-button admin-small" @click="detail(item.resourceOutId)">详情</button>
+                </td>
+            </tr>
+            <tr v-if="dataList.length === 0"><td colspan="6" style="text-align: center;">暂无数据</td></tr>
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+
+    </div>
+    <div  style="text-align: right;">
+        <ad-paginator :total-count="pager.totalCount" :page-size="pager.pageSize" :current-page="pager.currentPage"  @toggle-page="togglePage($event)"></ad-paginator>
+    </div>
+
+    <ad-modal
+            title="数据源创建"
+            :display="addDataSource"
+            width="640px"
+            height="740px"
+            :buttons="[ {
+                    text: '取消',
+                    name: 'cancel',
+                    buttonClass:'admin-small',
+                    handler: 'closeCreateDialog'
+                },{
+                    text: '保存',
+                    name: 'save',
+                    buttonClass:'admin-small',
+                    handler: createDataSource
+                },{
+                    text: '测试',
+                    name: 'test',
+                    buttonClass:'admin-small',
+                    handler: testDataSourceAdd
+                }]"
+            @admin-modal-off="closeCreateDialog">
+
+        <div class="external-resource" style="padding:10px;">
+            <div class="clims" style="margin-top: 10px;">
+                <div class="col_title">数据源名称</div>
+                <ad-input
+                        label=""
+                        placeholder=""
+                        :warnings="warningsMap['dataSourceName']"
+                        @blur="validateNotEmpty(createData.dataSourceName, 'dataSourceName')"
+                        v-model="createData.dataSourceName"
+                        value=""></ad-input>
+            </div>
+            <div style="padding:10px 0;margin-top: 10px;">
+                <div class="col_title">数据源类型</div>
+                <ad-select
+                        v-model="theDataSourceType"
+                        :options="dataSourceTypeList"
+                        placeholder=""
+                        :small="true"
+                        label="">
+                </ad-select>
+            </div>
+            <div class="clims" style="margin-top: 10px;">
+                <div class="col_title" style="display: table-cell;vertical-align: top;"><span>数据源备注</span></div>
+                <ad-input
+                        style="display: table-cell;"
+                        type="textarea"
+                        label=""
+                        v-model="createData.DataSourceDescription"
+                        placeholder=""
+                        :warnings="warningsMap['DataSourceDescription']"
+                        @keyup="validateNotEmpty(createData.DataSourceDescription, 'DataSourceDescription')"
+                        value=""></ad-input>
+            </div>
+            <div class="clims" style="margin-top: 40px;font-size: 14px;">
+                <div style="line-height: 40px;">数据源属性</div>
+                <div class="div-area">
+
+                    <div class="mysql" v-show="createData.dataSourceType=='1'">
+                        <div style="padding:10px;">
+                            <span class="proTitle">服务器地址</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['serverAddress']"
+                                      @blur="validateNotEmpty(createData.serverAddress, 'serverAddress')"
+                                      v-model="createData.serverAddress"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">服务器端口</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['serverPort']"
+                                      @blur="validateNotEmpty(createData.serverPort, 'serverPort')"
+                                      v-model="createData.serverPort"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">用户名</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['userName']"
+                                      @blur="validateNotEmpty(createData.userName, 'userName')"
+                                      v-model="createData.userName"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">密 码</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['userPassword']"
+                                      @blur="validateNotEmpty(createData.userPassword, 'userPassword')"
+                                      v-model="createData.userPassword"
+                                      type="password">
+                            </ad-input>
+
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">数据库</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['database']"
+                                      @blur="validateNotEmpty(createData.database, 'database')"
+                                      v-model="createData.database"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                    </div>
+
+                    <div class ="ftp" v-show="createData.dataSourceType=='2'">
+                        <div>
+                            <span class="proTitle">服务器地址</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['ftpServerAddress']"
+                                      @blur="validateNotEmpty(createData.ftpServerAddress, 'ftpServerAddress')"
+                                      v-model="createData.ftpServerAddress"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">服务器端口</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['ftpServerPort']"
+                                      @blur="validateNotEmpty(createData.ftpServerPort, 'ftpServerPort')"
+                                      v-model="createData.ftpServerPort"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">用户名</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['ftpUserName']"
+                                      @blur="validateNotEmpty(createData.ftpUserName, 'ftpUserName')"
+                                      v-model="createData.ftpUserName"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">密 码</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['ftpUserPassword']"
+                                      @blur="validateNotEmpty(createData.ftpUserPassword, 'ftpUserPassword')"
+                                      v-model="createData.ftpUserPassword"
+                                      type="password">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">链接模式</span>
+
+                            <ad-select
+                                    v-model="createData.connectMode"
+                                    :options="connectedModeOptions"
+                                    placeholder=""
+                                    :small="true"
+                                    label="">
+                            </ad-select>
+
+                        </div>
+                        <div>
+                            <span class="proTitle">目录路径</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['path']"
+                                      @blur="validateNotEmpty(createData.path, 'path')"
+                                      v-model="createData.path"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                    </div>
+
+        <!--  <div class="Kafka" v-show="createData.dataSourceType=='Kafka'">
+                        <div>
+                            <span class="proTitle">zk服务器地址</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['zkServerAddress']"
+                                      @blur="validateNotEmpty(createData.zkServerAddress, 'zkServerAddress')"
+                                      v-model="createData.zkServerAddress"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">Broker列表</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['brokerList']"
+                                      @blur="validateNotEmpty(createData.brokerList, 'brokerList')"
+                                      v-model="createData.brokerList"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">Topic名称</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['topicName']"
+                                      @blur="validateNotEmpty(createData.topicName, 'topicName')"
+                                      v-model="createData.topicName"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                    </div>
+
+                    <div class="HDFS" v-show="createData.dataSourceType=='hdfs'">
+                        <div>
+                            <span class="proTitle">NameNode地址</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['nameNodeAddress']"
+                                      @blur="validateNotEmpty(createData.nameNodeAddress, 'nameNodeAddress')"
+                                      v-model="createData.nameNodeAddress"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div>
+                            <span class="proTitle">用户名</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['HDFSName']"
+                                      @blur="validateNotEmpty(createData.HDFSName, 'HDFSName')"
+                                      v-model="createData.HDFSName"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                    </div>
+
+                    <div class="vertica" v-show="createData.dataSourceType=='vertica'">
+                        <div style="padding:10px;">
+                            <span class="proTitle">服务器地址</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['serverAddress']"
+                                      @blur="validateNotEmpty(createData.serverAddress, 'serverAddress')"
+                                      v-model="createData.serverAddress"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">服务器端口</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['serverPort']"
+                                      @blur="validateNotEmpty(createData.serverPort, 'serverPort')"
+                                      v-model="createData.serverPort"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">用户名</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['userName']"
+                                      @blur="validateNotEmpty(createData.userName, 'userName')"
+                                      v-model="createData.userName"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">密 码</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['userPassword']"
+                                      @blur="validateNotEmpty(createData.userPassword, 'userPassword')"
+                                      v-model="createData.userPassword"
+                                      type="password">
+                            </ad-input>
+
+                        </div>
+                        <div style="padding:10px;">
+                            <span class="proTitle">数据库</span>
+                            <ad-input label=""
+                                      placeholder=""
+                                      value=""
+                                      :warnings="warningsMap['database']"
+                                      @blur="validateNotEmpty(createData.database, 'database')"
+                                      v-model="createData.database"
+                                      type="text">
+                            </ad-input>
+                        </div>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+    </ad-modal>
+
+    <ad-modal
+            title="数据源详细"
+            :display="dataSourceDetail"
+            width="640px"
+            height="700px"
+            :buttons="[{
+                text: '确定',
+                name: 'cancel',
+                buttonClass:'admin-small',
+                handler: 'closeDetailDialog'
+            }]"
+            @admin-modal-off="closeDetailDialog">
+        <div style="padding:10px;">
+            <detail :data-source-type-list="dataSourceTypeList" :detail-data="detailData" :dst="detailDataSourceType"></detail>
+        </div>
+    </ad-modal>
+
+    <ad-modal
+            title="数据源修改"
+            :display="dataSourceUpdate"
+            width="640px"
+            height="740px"
+            :buttons="[
+                    {
+                        text: '取消',
+                        name: 'cancel',
+                        buttonClass:'admin-small',
+                        handler: updateCancel
+                    },
+                    {
+                        text: '保存',
+                        name: 'update',
+                        buttonClass:'admin-small',
+                        handler: updateDataSource
+                    },{
+                        text: '测试',
+                        name: 'test',
+                        buttonClass:'admin-small',
+                        handler: testDataSourceUpdate
+                    }]"
+            @admin-modal-off="updateCancel">
+        <div style="padding:10px;">
+            <update :ini-type-list="dataSourceTypeList" :ini-data="iniData" :ini-type="iniType" :warning-map="warningMap"></update>
+        </div>
+    </ad-modal>
+
+    <div style="display: none;">
+        <div id="external-resource-spinner" style="position: fixed;
+                width: 100%;height: 100%;
+                padding-left:45%;
+                padding-top: 20%;
+                display: flex;
+                flex-flow: row;
+                z-index: 999999;
+                background-color:rgba(0,0,0,.75)">
+            <ad-spinner type="circle" color="#0e9ee2;" size="50px"></ad-spinner>
+        </div>
+    </div>
+</div>
